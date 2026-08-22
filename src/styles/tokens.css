@@ -1,0 +1,37 @@
+:root {
+    /* marca */
+    --blue-900: #101a86;
+    --blue-700: #1526c7;
+    --blue-600: #1b2fcb;
+    --blue-500: #2540e6;
+    --blue-050: #eaeeff;
+
+    /* superfícies e texto */
+    --page: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f2f4f9;
+    --line: #e1e5ef;
+    --ink-900: #101426;
+    --ink-600: #4b5168;
+    --ink-400: #8b91a6;
+
+    --accent: #ef4a23;
+    --success: #0f9d58;
+    --danger: #d92d20;
+
+    /* estados dos nós */
+    --status-idle: #1b2fcb;
+    --status-visiting: #f5a623;
+    --status-updating: #12a150;
+    --status-lazy_pending: #8b5cf6;
+    --status-pushing_down: #ef4a23;
+
+    --radius-sm: 6px;
+    --radius: 8px;
+    --radius-lg: 14px;
+
+    --shadow-sm: 0 1px 2px rgba(16, 20, 38, 0.06);
+    --shadow-md: 0 6px 24px rgba(16, 20, 38, 0.08);
+
+    --font-sans: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
