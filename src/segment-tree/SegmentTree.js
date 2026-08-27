@@ -1,5 +1,6 @@
 import { NodeStatus } from "./Enums.js";
 import { SumStrategy } from "./Operations.js";
+import { HistoryRecorder } from "../state/HistoryRecorder.js";
 
 export class SegmentTree {
     constructor(array, strategy = SumStrategy) {
@@ -15,19 +16,16 @@ export class SegmentTree {
             status: NodeStatus.IDLE,
             isLeaf: false,
         }));
-
-        this.history = [];
+        
+        this.recorder = new HistoryRecorder(() => ({
+            size: this.size,
+            nodes: this.tree.map(node => ({ ...node, range: [...node.range] }))
+        }));
 
         this.build(array, 1, 0, this.size - 1);
-        this._endRecording(`Árvore construída com ${this.size} elemento(s).`);
-    }
 
-    _saveFrame(message) {
-        this.history.push({
-            message,
-            size: this.size,
-            nodes: this.tree.map((node) => ({ ...node, range: [...node.range] })),
-        })
+        this._resetStatuses();
+        this.recorder.endRecording(`Árvore construída com ${this.size} elemento(s).`);
     }
 
     // Volta todos os nós ao estado de repouso, preservando as lazy tags pendentes
@@ -36,19 +34,6 @@ export class SegmentTree {
             if (node.id === null) continue;
             node.status = node.lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
         }
-    }
-
-    // Inicia a gravação de uma nova operação e a fita antiga é descartada
-    _beginRecording(message) {
-        this.history = [];
-        this._resetStatuses();
-        this._saveFrame(message);
-    }
-
-    // Fecha a gravação com um frame final "limpo"
-    _endRecording(message) {
-        this._resetStatuses();
-        this._saveFrame(message);
     }
 
     build(array, nodeIndex, left, right) {
@@ -62,7 +47,7 @@ export class SegmentTree {
                 isLeaf: true,
             };
 
-            this._saveFrame(`Nó folha criado no índice [${left}] com valor ${array[left]}`);
+            this.recorder.saveFrame(`Nó folha criado no índice [${left}] com valor ${array[left]}`);
 
             return;
         }
@@ -85,7 +70,7 @@ export class SegmentTree {
             isLeaf: false
         };
 
-        this._saveFrame(`Merge no intervalo [${left}, ${right}]. Valor atualizado para ${this.tree[nodeIndex].value}.`);
+        this.recorder.saveFrame(`Merge no intervalo [${left}, ${right}]. Valor atualizado para ${this.tree[nodeIndex].value}.`);
     }
 
     pushDown(nodeIndex, left, right) {
@@ -94,7 +79,7 @@ export class SegmentTree {
         if (node.lazy === 0) return;
 
         node.status = NodeStatus.PUSHING_DOWN;
-        this._saveFrame(`Iniciando push down no nó ${nodeIndex} (intervalo [${left}, ${right}])`);
+        this.recorder.saveFrame(`Iniciando push down no nó ${nodeIndex} (intervalo [${left}, ${right}])`);
 
         let middle = Math.floor((left + right) / 2);
         let leftChild = 2 * nodeIndex,
@@ -114,7 +99,7 @@ export class SegmentTree {
         node.lazy = 0;
         node.status = NodeStatus.IDLE;
 
-        this._saveFrame(`Push down concluído. Filhos herdaram as Lazy Tags.`);
+        this.recorder.saveFrame(`Push down concluído. Filhos herdaram as Lazy Tags.`);
     }
 
     updateRange(nodeIndex, left, right, qLeft, qRight, newValue) {
@@ -122,7 +107,7 @@ export class SegmentTree {
             return;
 
         this.tree[nodeIndex].status = NodeStatus.VISITING,
-        this._saveFrame(`Visitando o nó do intervalo [${left}, ${right}]`);
+        this.recorder.saveFrame(`Visitando o nó do intervalo [${left}, ${right}]`);
 
         if (left >= qLeft && right <= qRight) {
             let rangeSize = right - left + 1;
@@ -131,7 +116,7 @@ export class SegmentTree {
             this.tree[nodeIndex].lazy = this.operation.joinLazy(this.tree[nodeIndex].lazy, newValue)
             this.tree[nodeIndex].status = NodeStatus.LAZY_PENDING;
 
-            this._saveFrame(`Intervalo [${left}, ${right}] totalmete coberto. Valor atualizado e Lazy Tag aplicada.`);
+            this.recorder.saveFrame(`Intervalo [${left}, ${right}] totalmete coberto. Valor atualizado e Lazy Tag aplicada.`);
 
             return;
         }
@@ -149,7 +134,7 @@ export class SegmentTree {
         this.tree[nodeIndex].value = this.operation.merge(leftValue, rightValue);
 
         this.tree[nodeIndex].status = NodeStatus.UPDATING;
-        this._saveFrame(`Merge no intervalo [${left}, ${right}]. Novo valor: ${this.tree[nodeIndex].value}`);
+        this.recorder.saveFrame(`Merge no intervalo [${left}, ${right}]. Novo valor: ${this.tree[nodeIndex].value}`);
 
         this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
     }
@@ -157,14 +142,14 @@ export class SegmentTree {
     // Atribui um novo valor a uma única posição do array
     updatePoint(nodeIndex, left, right, position, newValue) {
         this.tree[nodeIndex].status = NodeStatus.VISITING;
-        this._saveFrame(`Descendo pelo nó do intervalo [${left}, ${right}] em busca do índice [${position}]`);
+        this.recorder.saveFrame(`Descendo pelo nó do intervalo [${left}, ${right}] em busca do índice [${position}]`);
 
         if (left === right) {
             this.tree[nodeIndex].value = newValue;
             this.tree[nodeIndex].lazy = 0;
             this.tree[nodeIndex].status = NodeStatus.UPDATING;
 
-            this._saveFrame(`Folha [${position}] recebeu o valor ${newValue}.`);
+            this.recorder.saveFrame(`Folha [${position}] recebeu o valor ${newValue}.`);
             return;
         }
 
@@ -183,7 +168,7 @@ export class SegmentTree {
         this.tree[nodeIndex].value = this.operation.merge(leftValue, rightValue);
 
         this.tree[nodeIndex].status = NodeStatus.UPDATING;
-        this._saveFrame(`Merge no intervalo [${left}, ${right}]. Novo valor: ${this.tree[nodeIndex].value}`);
+        this.recorder.saveFrame(`Merge no intervalo [${left}, ${right}]. Novo valor: ${this.tree[nodeIndex].value}`);
 
         this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
     }
@@ -195,12 +180,12 @@ export class SegmentTree {
         let originalStatus = this.tree[nodeIndex].status;
 
         this.tree[nodeIndex].status = NodeStatus.VISITING;
-        this._saveFrame(`Consultando nó no intervalo [${left}, ${right}]`);
+        this.recorder.saveFrame(`Consultando nó no intervalo [${left}, ${right}]`);
 
         if (left >= qLeft && right <= qRight) {
             this.tree[nodeIndex].status = originalStatus;
 
-            this._saveFrame(`Intervalo [${left}, ${right}] está dentro da query. Retornando valor: ${this.tree[nodeIndex].value}`);
+            this.recorder.saveFrame(`Intervalo [${left}, ${right}] está dentro da query. Retornando valor: ${this.tree[nodeIndex].value}`);
 
             return this.tree[nodeIndex].value;
         }
@@ -216,34 +201,38 @@ export class SegmentTree {
 
         let combinedResult = this.operation.merge(leftResult, rightResult);
 
-        this._saveFrame(`Resultado da query no intervalo [${left}, ${right}] é ${combinedResult}`);
+        this.recorder.saveFrame(`Resultado da query no intervalo [${left}, ${right}] é ${combinedResult}`);
         return combinedResult;
     }
 
 
     runPointUpdate(position, newValue) {
-        this._beginRecording(`Atualizando o índice [${position}] para o valor ${newValue}.`);
+        this._resetStatuses();
+        this.recorder.beginRecording(`Atualizando o índice [${position}] para o valor ${newValue}.`);
+
         this.updatePoint(1, 0, this.size - 1, position, newValue);
         this.array[position] = newValue;
-        this._endRecording(`Índice [${position}] atualizado para ${newValue}.`);
 
-        return this.history;
+        this._resetStatuses();
+        this.recorder.endRecording(`Índice [${position}] atualizado para ${newValue}.`);
+
+        return this.recorder.getHistory();
     }
 
     runRangeUpdate(qLeft, qRight, delta) {
-        this._beginRecording(`Somando ${delta} a cada elemento do intervalo [${qLeft}, ${qRight}].`);
+        this.recorder.beginRecording(`Somando ${delta} a cada elemento do intervalo [${qLeft}, ${qRight}].`);
         this.updateRange(1, 0, this.size - 1, qLeft, qRight, delta);
         for (let i = qLeft; i <= qRight; i++) this.array[i] += delta;
-        this._endRecording(`Intervalo [${qLeft}, ${qRight}] atualizado com +${delta}.`);
+        this.recorder.endRecording(`Intervalo [${qLeft}, ${qRight}] atualizado com +${delta}.`);
 
-        return this.history;
+        return this.recorder.getHistory();
     }
 
     runRangeQuery(qLeft, qRight) {
-        this._beginRecording(`Consultando o intervalo [${qLeft}, ${qRight}].`);
+        this.recorder.beginRecording(`Consultando o intervalo [${qLeft}, ${qRight}].`);
         const result = this.queryRange(1, 0, this.size - 1, qLeft, qRight);
-        this._endRecording(`Consulta em [${qLeft}, ${qRight}] concluída. Resultado: ${result}`);
+        this.recorder.endRecording(`Consulta em [${qLeft}, ${qRight}] concluída. Resultado: ${result}`);
 
-        return { result, history: this.history };
+        return { result, history: this.recorder.getHistory() };
     }
 }
