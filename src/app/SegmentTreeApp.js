@@ -21,7 +21,7 @@ const LEGEND = [
  * Controlador da aplicação, traduz eventos da UI em chamadas ao core
  * e devolve o histórico gravado para o StateManager reproduzir
  */
-export class App {
+export class SegmentTreeApp {
     constructor(root) {
         this.root = root;
         this.tree = null;
@@ -41,13 +41,13 @@ export class App {
             onSpeed: (ms) => this.player.setSpeed(ms),
         });
 
-        this.player = new StateManager(
-            (frame, index, total) => {
-                this.renderer.render(frame);
-                this.playback.update(frame, index, total);
-            },
-            (isPlaying) => this.playback.setPlaying(isPlaying)
-        );
+        this.player = new StateManager();
+        this.player.on('frameChange', (frame, index, total) => {
+            this.renderer.render(frame);
+            this.playback.update(frame, index, total);
+        });
+        this.player.on('playStateChange', (isPlaying) => this.playback.setPlaying(isPlaying));
+
         this.player.setSpeed(600);
 
         this.mount();
@@ -96,7 +96,7 @@ export class App {
         const option = Strategies[strategyKey];
         this.tree = new SegmentTree(parsed.value, option.strategy);
 
-        this.player.loadHistory(this.tree.history);
+        this.player.loadHistory(this.tree.recorder.getHistory());
         this.panel.setOperationsEnabled(true);
         this.panel.clearOperationInputs();
 
