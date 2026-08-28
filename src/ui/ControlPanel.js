@@ -1,4 +1,4 @@
-import { el } from "./dom.js";
+import { el, FeedbackType } from "./dom.js";
 import { Field } from "./components/Field.js";
 import { Accordion, accordionGroup } from "./components/Accordion.js";
 import { OperationSelector } from "./components/OperationSelector.js";
@@ -54,7 +54,7 @@ export function ControlPanel({ onBuild, onPointUpdate, onRangeQuery, onRangeUpda
         get strategyKey() {
             return selector.value;
         },
-        setFeedback(text, kind = "info") {
+        setFeedback(text, kind = FeedbackType.INFO) {
             feedback.textContent = text ?? "";
             feedback.className = `feedback feedback--${kind}`;
         },

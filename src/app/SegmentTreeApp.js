@@ -3,7 +3,7 @@ import { Strategies } from "../segment-tree/Operations.js";
 import { NodeStatus } from "../segment-tree/Enums.js";
 import { StateManager } from "../state/StateManager.js";
 
-import { el, formatValue } from "../ui/dom.js";
+import { el, FeedbackType, formatValue } from "../ui/dom.js";
 import { TreeRenderer } from "../visualization/TreeRenderer.js";
 import { ControlPanel } from "../ui/ControlPanel.js";
 import { Playback } from "../ui/components/Playback.js";
@@ -107,7 +107,7 @@ export class SegmentTreeApp {
 
         this.panel.setFeedback(
             `Árvore de ${option.label} construída com ${parsed.value.length} elemento(s).${warning}`,
-            "success"
+            FeedbackType.SUCCESS
         );
     }
 
@@ -123,7 +123,7 @@ export class SegmentTreeApp {
         this.player.loadHistory(this.tree.runPointUpdate(position.value, newValue.value));
         this.panel.setFeedback(
             `Índice [${position.value}] recebeu o valor ${newValue.value}.`,
-            "success"
+            FeedbackType.SUCCESS
         );
     }
 
@@ -141,7 +141,7 @@ export class SegmentTreeApp {
         this.player.loadHistory(this.tree.runRangeUpdate(left, right, delta.value));
         this.panel.setFeedback(
             `Somado ${delta.value} a cada elemento de [${left}, ${right}] via lazy propagation.`,
-            "success"
+            FeedbackType.SUCCESS
         );
     }
 
@@ -158,7 +158,7 @@ export class SegmentTreeApp {
         this.player.loadHistory(history);
         this.panel.setFeedback(
             `${label?.resultLabel ?? "Resultado"} de [${left}, ${right}] = ${formatValue(result)}`,
-            "result"
+            FeedbackType.RESULT
         );
     }
 
@@ -172,6 +172,6 @@ export class SegmentTreeApp {
     }
 
     fail(message) {
-        this.panel.setFeedback(message, "error");
+        this.panel.setFeedback(message, FeedbackType.ERROR);
     }
 }

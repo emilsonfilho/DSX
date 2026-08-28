@@ -50,3 +50,10 @@ export function formatValue(value) {
 
     return String(value);
 }
+
+export const FeedbackType = Object.freeze({
+    INFO: "info",
+    SUCCESS: "success",
+    ERROR: "error",
+    RESULT: "result"
+})
