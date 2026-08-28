@@ -26,9 +26,9 @@ export class HistoryRecorder {
      * Description associated with the initial snapshot.
      * @returns {void}
      */
-    beginRecording(message) {
+    beginRecording(message, detail = "") {
         this.history = [];
-        this.saveFrame(message);
+        this.saveFrame(message, detail);
     }
 
     /**
@@ -44,6 +44,7 @@ export class HistoryRecorder {
     saveFrame(message, stateOverride = {}) {
         this.history.push({
             message,
+            detail,
             ...this.takeSnapshot(),
             ...stateOverride
         })
@@ -59,8 +60,8 @@ export class HistoryRecorder {
      * Description associated with the final snapshot.
      * @returns {void}
      */
-    endRecording(message) {
-        this.saveFrame(message);
+    endRecording(message, detail = "") {
+        this.saveFrame(message, detail);
     }
 
     /**
