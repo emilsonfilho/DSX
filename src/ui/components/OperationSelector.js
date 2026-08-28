@@ -39,7 +39,7 @@ export function OperationSelector({ onChange } = {}) {
             return selected;
         },
         select(key) {
-            if (!Strategies[key]) return;
+            if (!Strategies[key] || key === selected) return;
 
             selected = key;
             for (const [optionKey, button] of buttons)

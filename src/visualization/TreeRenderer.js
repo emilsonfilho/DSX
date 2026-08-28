@@ -7,15 +7,111 @@ const PADDING_X = 48;
 const PADDING_Y = 44;
 const RADIUS = 19;
 
-// Desenha um frame do histórico
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 2.5;
+
+const ZOOM_SENSITIVITY = 0.0015;
+
 export class TreeRenderer {
     constructor(container) {
         this.container = container;
+        this.zoom = 1;
+
+        this.zoomWrap = el(
+            "div",
+            { class: "tree-canvas__zoom-wrap" }
+        );
+
+        this.container.replaceChildren(this.zoomWrap);
+
+        /*
+        * O zoom é controlado diretamente pelo scroll
+        * do mouse/trackpad sobre a visualização.
+        */
+        this.container.addEventListener(
+            "wheel",
+            (event) => this._handleWheel(event),
+            { passive: false }
+        );
+
+        /*
+        * Duplo clique restaura a visualização.
+        */
+        this.container.addEventListener(
+            "dblclick",
+            () => this.resetZoom()
+        );
+
+        this.container.title =
+            "Use o scroll para controlar o zoom. Duplo clique para restaurar.";
+
+        this._applyZoom();
         this.clear();
     }
 
     clear(message = "Digite um array e clique em “Construir árvore”.") {
-        this.container.replaceChildren(el("p", { class: "tree-canvas__empty" }, message));
+        this.zoomWrap.replaceChildren(el("p", { class: "tree-canvas__empty" }, message));
+    }
+
+    _handleWheel(event) {
+        /*
+        * Não captura o scroll enquanto não existir
+        * uma árvore desenhada.
+        */
+        if (!this.zoomWrap.querySelector("svg")) {
+            return;
+        }
+
+        const direction = -event.deltaY;
+
+        /*
+        * Zoom exponencial deixa tanto a rodinha
+        * quanto o trackpad mais suaves.
+        */
+        const factor = Math.exp(
+            direction * ZOOM_SENSITIVITY
+        );
+
+        const nextZoom = Math.min(
+            ZOOM_MAX,
+            Math.max(
+                ZOOM_MIN,
+                this.zoom * factor
+            )
+        );
+
+        /*
+        * Se já chegou no limite, permite que o
+        * scroll continue normalmente pela página.
+        */
+        if (Math.abs(nextZoom - this.zoom) < 0.001) {
+            return;
+        }
+
+        event.preventDefault();
+
+        this._setZoom(nextZoom);
+    }
+
+    resetZoom() {
+        this._setZoom(1);
+    }
+
+    _setZoom(value) {
+        this.zoom = Math.min(
+            ZOOM_MAX,
+            Math.max(
+                ZOOM_MIN,
+                Number(value.toFixed(2))
+            )
+        );
+
+        this._applyZoom();
+    }
+
+    _applyZoom() {
+        this.zoomWrap.style.transform =
+            `scale(${this.zoom})`;
     }
 
     render(frame) {
@@ -31,6 +127,8 @@ export class TreeRenderer {
 
         const svg = svgEl("svg", {
             class: "tree-canvas__svg",
+            width,
+            height,
             viewBox: `0 0 ${width} ${height}`,
             preserveAspectRatio: "xMidYMid meet",
             role: "img",
@@ -50,7 +148,7 @@ export class TreeRenderer {
             svg.appendChild(this._renderNode(frame.nodes[index], position, toPixels(position)));
         }
 
-        this.container.replaceChildren(svg);
+        this.zoomWrap.replaceChildren(svg);
     }
 
     _renderNode(node, position, { x, y }) {

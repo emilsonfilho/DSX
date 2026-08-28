@@ -7,20 +7,21 @@ export class HistoryRecorder {
         this.takeSnapshot = snapshotStrategy;
     }
 
-    beginRecording(message) {
+    beginRecording(message, detail = "") {
         this.history = [];
-        this.saveFrame(message);
+        this.saveFrame(message, detail);
     }
 
-    saveFrame(message) {
+    saveFrame(message, detail = "") {
         this.history.push({
             message,
+            detail,
             ...this.takeSnapshot()
         })
     }
 
-    endRecording(message) {
-        this.saveFrame(message);
+    endRecording(message, detail = "") {
+        this.saveFrame(message, detail);
     }
 
     getHistory() {

@@ -31,6 +31,7 @@ export class SegmentTreeApp {
             onPointUpdate: (input) => this.handlePointUpdate(input),
             onRangeQuery: (input) => this.handleRangeQuery(input),
             onRangeUpdate: (input) => this.handleRangeUpdate(input),
+            onStrategyChange: (strategyKey) => this.handleStrategyChange(strategyKey),
         });
 
         this.playback = Playback({
@@ -137,10 +138,11 @@ export class SegmentTreeApp {
         if (!delta.ok) return this.fail(delta.error);
 
         const [left, right] = range.value;
+        const option = Object.values(Strategies).find((item) => item.strategy === this.tree.operation);
 
         this.player.loadHistory(this.tree.runRangeUpdate(left, right, delta.value));
         this.panel.setFeedback(
-            `Somado ${delta.value} a cada elemento de [${left}, ${right}] via lazy propagation.`,
+            `${option?.updateVerb ?? "Atualizado"} ${delta.value} em cada elemento de [${left}, ${right}] via lazy propagation.`,
             FeedbackType.SUCCESS
         );
     }
@@ -159,6 +161,24 @@ export class SegmentTreeApp {
         this.panel.setFeedback(
             `${label?.resultLabel ?? "Resultado"} de [${left}, ${right}] = ${formatValue(result)}`,
             FeedbackType.RESULT
+        );
+    }
+
+    // Trocar o tipo de operação apaga a árvore atual, mas preserva o array digitado
+    handleStrategyChange(strategyKey) {
+        if (!this.tree) return;
+
+        this.tree = null;
+        this.player.pause();
+        this.player.loadHistory([]);
+        this.renderer.clear("Operação alterada. Clique em “Construir árvore” para aplicá-la.");
+        this.playback.reset();
+        this.panel.setOperationsEnabled(false);
+
+        const option = Strategies[strategyKey];
+        this.panel.setFeedback(
+            `Operação alterada para ${option.label}. Construa a árvore novamente para ver o efeito.`,
+            FeedbackType.INFO
         );
     }
 

@@ -29,11 +29,14 @@ export function Playback({ onPrev, onToggle, onNext, onScrub, onSpeed }) {
 
     const counter = el("span", { class: "playback__counter" }, "0 / 0");
     const message = el("p", { class: "playback__message" }, "Nenhuma operação executada ainda.");
+    const detail = el("p", { class: "playback__detail", hidden: true });
 
     const root = el(
         "div",
         { class: "playback" },
+        el("span", { class: "playback__label" }, "Passo a passo da execução"),
         message,
+        detail,
         el(
             "div",
             { class: "playback__controls" },
@@ -50,6 +53,8 @@ export function Playback({ onPrev, onToggle, onNext, onScrub, onSpeed }) {
         root,
         update(frame, index, total) {
             message.textContent = frame.message;
+            detail.textContent = frame.detail ?? "";
+            detail.hidden = !frame.detail;
             counter.textContent = `${index + 1} / ${total}`;
             scrubber.max = String(Math.max(total - 1, 0));
             scrubber.value = String(index);
@@ -62,6 +67,8 @@ export function Playback({ onPrev, onToggle, onNext, onScrub, onSpeed }) {
         },
         reset() {
             message.textContent = "Nenhuma operação executada ainda.";
+            detail.textContent = "";
+            detail.hidden = true;
             counter.textContent = "0 / 0";
             scrubber.max = "0";
             scrubber.value = "0";
