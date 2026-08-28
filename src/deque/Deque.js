@@ -53,6 +53,8 @@ export class Deque {
         newNode.next.prev = newNode;
 
         this._size++;
+
+
     }
 
     /**
@@ -143,11 +145,47 @@ export class Deque {
         return this._size;
     }
 
+    /**
+     * Gets the value of the last element in the deque.
+     *
+     * Time complexity: O(1).
+     *
+     * @returns {*} The last element in the deque.
+     */
     get back() {
         return this.tail.prev.value;
     }
 
+    /**
+     * Gets the value of the first element in the deque.
+     *
+     * Time complexity: O(1).
+     *
+     * @returns {*} The first element in the deque.
+     */
     get front() {
         return this.head.next.value;
+    }
+
+    /**
+     * Returns an array containing all current elements of the deque,
+     * preserving the order from front to back.
+     * Essential for creting rendering snapshots (frames).
+     *
+     * Time complexity: O(n), whre n is the number of elements in the deque.
+     *
+     * @returns {Array} Array containing all elements of the deque.
+     */
+    toArray() {
+        const elements = [];
+
+        let current = this.head.next;
+
+        while (current !== this.tail) {
+            elements.push(current.value);
+            current = current.next;
+        }
+
+        return elements;
     }
 }
