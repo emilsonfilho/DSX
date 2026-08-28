@@ -2,6 +2,7 @@ import "./styles/main.css";
 import { SegmentTreeApp } from "./app/SegmentTreeApp.js";
 import { el } from "./ui/dom.js";
 import { AppTabs } from "./ui/components/AppTabs.js";
+import {DequeApp} from "./app/DequeApp.js";
 
 const root = document.querySelector("#app");
 
@@ -17,8 +18,7 @@ function renderTabs() {
         {
             key: 'deque',
             label: 'Deque Monotônica',
-            initFn: (container) => 
-                container.innerHTML = "<p>Deque em desenvolvimento...</p>"
+            initFn: (container) => new DequeApp(container)
         }
     ]
 

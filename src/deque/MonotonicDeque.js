@@ -48,7 +48,7 @@ export class MonotonicDeque {
      * @returns {void}
      */
     push(value, index) {
-        while (!this.deque.empty() && !this.comparator(this.deque.back()[0], value)) {
+        while (!this.deque.empty() && !this.comparator(this.deque.back[0], value)) {
             const removed = this.deque.pop();
 
             this.recorder.saveFrame(`Removendo valor ${removed[0]} do final para manter a motonicidade.`);
@@ -71,7 +71,7 @@ export class MonotonicDeque {
      * @returns {void}
      */
     pop(limit) {
-        while (!this.deque.empty() && this.deque.front()[1] < limit) {
+        while (!this.deque.empty() && this.deque.front[1] < limit) {
             const removed = this.deque.shift();
             this.recorder.saveFrame(`Valor ${removed[0]} descartado pois está fora do limite da janela.`);
         }
@@ -97,7 +97,7 @@ export class MonotonicDeque {
         if (this.empty())
             return undefined;
 
-        return this.deque.front()[0];
+        return this.deque.front[0];
     }
 
     /**
@@ -115,12 +115,50 @@ export class MonotonicDeque {
      * @returns {Array<Object>}
      * History containing the states generated during the insertion.
      */
-    runPush(value, index) {
+    runPushBack(value, index) {
         this.recorder.beginRecording(`Iniciando inserção do valor ${value}.`);
 
         this.push(value, index);
 
         this.recorder.endRecording(`Inserção do valor ${value} finalizada.`);
+        return this.recorder.getHistory();
+    }
+
+    runPushFront(value, index) {
+        this.recorder.beginRecording(`Iniciando inserção manual na frente.`);
+
+        // Inserção direta na frente (usando o unshift do seu Deque.js)
+        this.deque.unshift([value, index]);
+
+        this.recorder.endRecording(`Valor ${value} empurrado (Push) no Front.`);
+        return this.recorder.getHistory();
+    }
+
+    runPopFront() {
+        this.recorder.beginRecording(`Removendo elemento da frente (Pop Front).`);
+
+        if (this.empty()) {
+            this.recorder.endRecording(`Operação cancelada: O deque já está vazio.`);
+            return this.recorder.getHistory();
+        }
+
+        const removed = this.deque.shift(); // Remove da frente
+
+        this.recorder.endRecording(`Valor ${removed[0]} removido da frente com sucesso.`);
+        return this.recorder.getHistory();
+    }
+
+    runPopBack() {
+        this.recorder.beginRecording(`Removendo elemento do final (Pop Back).`);
+
+        if (this.empty()) {
+            this.recorder.endRecording(`Operação cancelada: O deque já está vazio.`);
+            return this.recorder.getHistory();
+        }
+
+        const removed = this.deque.pop(); // Remove do final
+
+        this.recorder.endRecording(`Valor ${removed[0]} removido do final com sucesso.`);
         return this.recorder.getHistory();
     }
 
@@ -147,26 +185,80 @@ export class MonotonicDeque {
      */
     runSlidingWindow(array, k) {
         this.recorder.beginRecording(`Iniciando Janela Deslizante de tamanho ${k}.`);
-
-        while (!this.empty())
-            this.deque.pop();
+        while (!this.empty()) this.deque.pop();
 
         const result = [];
 
         for (let i = 0; i < array.length; i++) {
-            this.recorder.saveFrame(`Avaliando elemento ${array[i]} no índice ${i}.`);
+            const current = array[i];
+            const cand = [current, i];
 
-            this.pop(i - k + 1);
-            this.push(array[i], i);
+            // Helper para injetar os estados extras no frame (Candidato e Resultado)
+            const baseState = () => ({ candidate: cand, result: [...result] });
 
+            this.recorder.saveFrame(`i=${i}, A[${i}]=${current}`, { ...baseState(), status: 'idle' });
+
+            // ==========================================
+            // 1. POP EXPIRED (Verifica o limite da Janela)
+            // ==========================================
+            if (i >= k) {
+                const expiredIdx = i - k;
+                // Lembrando que no nosso Deque.js, o getter front devolve o [valor, índice]
+                const isFrontExpired = !this.empty() && this.deque.front[1] === expiredIdx;
+
+                const msg = `Janela (${i - k + 1}..${i}) → Saiu ${expiredIdx}. A[${expiredIdx}] ∈ L? ${isFrontExpired ? 'YES' : 'NO'}`;
+
+                if (isFrontExpired) {
+                    // Fica vermelho apontando pro primeiro elemento
+                    this.recorder.saveFrame(msg, { ...baseState(), status: 'expired', target: 'front' });
+                    this.deque.shift();
+                    this.recorder.saveFrame(`${msg}\nRemovido da frente.`, { ...baseState(), status: 'idle' });
+                } else {
+                    this.recorder.saveFrame(msg, { ...baseState(), status: 'idle' });
+                }
+            }
+
+            // ==========================================
+            // 2. PUSH (Dança da Monotonicidade)
+            // ==========================================
+            while (!this.empty()) {
+                const backVal = this.deque.back[0];
+
+                // Frame 1: Laranja (Avaliando)
+                this.recorder.saveFrame(`Comparando candidato ${current} com o fim da deque (${backVal})...`, { ...baseState(), status: 'compare', target: 'back' });
+
+                if (!this.comparator(backVal, current)) {
+                    // Frame 2: Vermelho (Violação) -> REMOVE
+                    this.recorder.saveFrame(`${current} < ${backVal} → REMOVE`, { ...baseState(), status: 'violate', target: 'back' });
+                    this.deque.pop();
+                } else {
+                    // Frame 2: Verde (Válido) -> ADD
+                    this.recorder.saveFrame(`${current} ≮ ${backVal} → ADD`, { ...baseState(), status: 'valid', target: 'back' });
+                    break;
+                }
+            }
+
+            if (this.empty()) {
+                this.recorder.saveFrame(`L = ∅ → Não tem ninguém, ADD`, { ...baseState(), status: 'idle' });
+            }
+
+            this.deque.push([current, i]);
+
+            // Mostra como a deque ficou após a inserção ⟨ 3, 5 ⟩
+            const elementsStr = this.deque.toArray().map(e => e[0]).join(',');
+            this.recorder.saveFrame(`L_f = ⟨ ${elementsStr} ⟩`, { result: [...result] });
+
+            // ==========================================
+            // 3. COLETAR RESULTADO DA JANELA
+            // ==========================================
             if (i >= k - 1) {
-                const currentBest = this.front();
-                result.push(currentBest);
-                this.recorder.saveFrame(`Janela fechada em [${i - k + 1} até ${i}]. Melhor valor: ${currentBest}.`);
+                const best = this.deque.front[0];
+                result.push(best);
+                this.recorder.saveFrame(`JANELA ${i - k + 2}: L[0] = ${best}`, { result: [...result] });
             }
         }
 
-        this.recorder.endRecording(`Janela Deslizante de tamanho ${k} finalizada.`);
-        return { result, history: this.recorder.getHistory() }
+        this.recorder.endRecording(`Resultado Final:\n[ ${result.join(', ')} ]`);
+        return { result, history: this.recorder.getHistory() };
     }
 }

@@ -41,10 +41,11 @@ export class HistoryRecorder {
      * Description associated with the snapshot.
      * @returns {void}
      */
-    saveFrame(message) {
+    saveFrame(message, stateOverride = {}) {
         this.history.push({
             message,
-            ...this.takeSnapshot()
+            ...this.takeSnapshot(),
+            ...stateOverride
         })
     }
 
