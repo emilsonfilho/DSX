@@ -44,6 +44,10 @@ export const AndStrategy = {
     joinLazy: (oldLazy, newLazy) => (oldLazy === 0 ? newLazy : oldLazy & newLazy),
 }
 
+export const AscendingComparator = (a, b) => a <= b
+
+export const DescendingComparator = (a, b) => a >= b
+
 /**
  * Catálogo das operações expostas na interface
  */
