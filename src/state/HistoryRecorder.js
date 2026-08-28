@@ -41,7 +41,7 @@ export class HistoryRecorder {
      * Description associated with the snapshot.
      * @returns {void}
      */
-    saveFrame(message, stateOverride = {}) {
+    saveFrame(message, detail = "", stateOverride = {}) {
         this.history.push({
             message,
             detail,
@@ -53,19 +53,19 @@ export class HistoryRecorder {
     /**
      * Saves the final snapshot of the current recording.
      *
-     * This method is equivalent to calling {@link saveFrame} and is intended
+     * This method is equivalent to calling saveFrame and is intended
      * to represent the final state of an operation.
      *
      * @param {string} message
      * Description associated with the final snapshot.
+     * @param {string} detail
+     * Optional detailed description.
+     * @param {Object} stateOverride
+     * Optional state overrides for the final frame.
      * @returns {void}
      */
-    saveFrame(message, detail = "") {
-        this.history.push({
-            message,
-            detail,
-            ...this.takeSnapshot()
-        })
+    endRecording(message, detail = "", stateOverride = {}) {
+        this.saveFrame(message, detail, stateOverride);
     }
 
 

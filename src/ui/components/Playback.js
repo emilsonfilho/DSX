@@ -52,8 +52,8 @@ export function Playback({ onPrev, onToggle, onNext, onScrub, onSpeed }) {
     return {
         root,
         update(frame, index, total) {
-            message.textContent = frame.message;
-            detail.textContent = frame.detail ?? "";
+            message.innerHTML = frame.message;
+            detail.innerHTML = frame.detail ?? "";
             detail.hidden = !frame.detail;
             counter.textContent = `${index + 1} / ${total}`;
             scrubber.max = String(Math.max(total - 1, 0));
@@ -66,8 +66,8 @@ export function Playback({ onPrev, onToggle, onNext, onScrub, onSpeed }) {
             toggleButton.title = isPlaying ? "Pausar" : "Reproduzir";
         },
         reset() {
-            message.textContent = "Nenhuma operação executada ainda.";
-            detail.textContent = "";
+            message.innerHTML = "Nenhuma operação executada ainda.";
+            detail.innerHTML = "";
             detail.hidden = true;
             counter.textContent = "0 / 0";
             scrubber.max = "0";
