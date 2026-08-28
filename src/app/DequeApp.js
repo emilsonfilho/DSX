@@ -10,13 +10,10 @@ export class DequeApp {
     constructor(root) {
         this.root = root;
 
-        // Instancia a classe principal de lógica do Deque
         this.deque = new MonotonicDeque();
 
-        // Variável auxiliar para rastrear o "índice" nas inserções manuais soltas
         this.manualIndex = 0;
 
-        // 1. Instancia o Painel de Controle (com todos os callbacks)
         this.panel = DequeControlPanel({
             onPushBack: (value) => this.handlePushBack(value),
             onPopFront: () => this.handlePopFront(),
@@ -24,7 +21,6 @@ export class DequeApp {
             onSlidingWindow: (seq, windowSize) => this.handleSlidingWindow(seq, windowSize),
         });
 
-        // 2. Instancia a "Fita" de reprodução visual
         this.playback = Playback({
             onPrev: () => this.player.prev(),
             onNext: () => this.player.next(),
@@ -33,7 +29,6 @@ export class DequeApp {
             onSpeed: (ms) => this.player.setSpeed(ms),
         });
 
-        // 3. Instancia o Gerenciador de Estado usando o seu Padrão Observer
         this.player = new StateManager();
 
         this.player.on('frameChange', (frame, index, total) => {
@@ -47,7 +42,6 @@ export class DequeApp {
 
         this.player.setSpeed(600);
 
-        // Renderiza a interface na tela
         this.mount();
     }
 
@@ -69,23 +63,15 @@ export class DequeApp {
 
         this.renderer = new DequeRenderer(canvas);
 
-        // Renderiza a tela limpa inicial
         this.renderer.clear();
     }
 
-    // ==========================================
-    // HANDLERS (Ações disparadas pelo Painel)
-    // ==========================================
-
     handlePushBack(valueText) {
-        // Usa sua validação padrão
         const parsed = parseNumber(valueText, "Valor");
         if (!parsed.ok) return this.panel.setFeedback(parsed.error, "error");
 
-        // Executa a lógica que criamos no core e pega a fita de vídeo (history)
         const history = this.deque.runPushBack(parsed.value, this.manualIndex++);
 
-        // Carrega o vídeo no StateManager para tocar na tela
         this.player.loadHistory(history);
 
         this.panel.clearValueInput();
@@ -105,11 +91,9 @@ export class DequeApp {
     }
 
     handleSlidingWindow(seqText, windowSizeText) {
-        // Validação da sequência
         const parsedArray = parseArray(seqText);
         if (!parsedArray.ok) return this.panel.setFeedback(parsedArray.error, "error");
 
-        // Validação do tamanho da janela (k)
         const parsedK = parseNumber(windowSizeText, "Tamanho da janela");
         if (!parsedK.ok) return this.panel.setFeedback(parsedK.error, "error");
 
@@ -117,10 +101,8 @@ export class DequeApp {
             return this.panel.setFeedback("Tamanho da janela deve ser maior que 0 e menor ou igual ao array.", "error");
         }
 
-        // Executa a lógica da Janela Deslizante
         const { result, history } = this.deque.runSlidingWindow(parsedArray.value, parsedK.value);
 
-        // Toca a animação
         this.player.loadHistory(history);
 
         this.panel.setFeedback(`Janela Deslizante concluída. Resultado final: [${result.join(', ')}]`, "result");

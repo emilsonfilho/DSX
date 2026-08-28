@@ -23,7 +23,6 @@ export class DequeRenderer {
         const isEmpty = elements.length === 0;
         const drawCount = isEmpty ? 6 : elements.length;
 
-        // Palco fixo para impedir a tela de redimensionar
         const svg = svgEl("svg", {
             class: "deque-canvas__svg",
             viewBox: `0 0 ${STAGE_WIDTH} ${STAGE_HEIGHT}`,
@@ -35,9 +34,6 @@ export class DequeRenderer {
         const dequeTotalWidth = (drawCount * BOX_WIDTH) + ((drawCount - 1) * GAP);
         const startX = (STAGE_WIDTH / 2) - (dequeTotalWidth / 2);
 
-        // ==========================================
-        // TEXTOS LATERAIS (FRONT / BACK)
-        // ==========================================
         svg.appendChild(svgEl("text", {
             x: startX - 15, y: centerY + 4, "text-anchor": "end", fill: "var(--blue-700)", "font-size": "12px", "font-weight": "800"
         }, "FRONT"));
@@ -46,9 +42,6 @@ export class DequeRenderer {
             x: startX + dequeTotalWidth + 15, y: centerY + 4, "text-anchor": "start", fill: "var(--blue-700)", "font-size": "12px", "font-weight": "800"
         }, "BACK"));
 
-        // ==========================================
-        // LÓGICA DE CORES (O "Frufru")
-        // ==========================================
         const getColorProps = (isTarget, status) => {
             if (!isTarget) return { stroke: "var(--blue-700)", fill: "var(--surface)", width: "2" };
             switch(status) {
@@ -69,14 +62,10 @@ export class DequeRenderer {
             }
         };
 
-        // ==========================================
-        // DESENHAR CAIXAS DA DEQUE
-        // ==========================================
         for (let i = 0; i < drawCount; i++) {
             const x = startX + (i * (BOX_WIDTH + GAP));
             const y = centerY - (BOX_HEIGHT / 2);
 
-            // Descobre se esta caixa atual é o alvo da animação
             const isTarget = (frame.target === 'back' && i === drawCount - 1) ||
                 (frame.target === 'front' && i === 0);
 
@@ -105,9 +94,6 @@ export class DequeRenderer {
             svg.appendChild(group);
         }
 
-        // ==========================================
-        // DESENHAR CANDIDATO FLUTUANTE
-        // ==========================================
         if (frame.candidate) {
             const [candValue, candIndex] = frame.candidate;
             const candColors = getCandColors(frame.status);
@@ -128,18 +114,12 @@ export class DequeRenderer {
             svg.appendChild(candGroup);
         }
 
-        // ==========================================
-        // ARRAY DE RESULTADOS (No rodapé)
-        // ==========================================
         if (frame.result && frame.result.length > 0) {
             svg.appendChild(svgEl("text", {
                 x: STAGE_WIDTH / 2, y: STAGE_HEIGHT - 20, "text-anchor": "middle", fill: "var(--blue-700)", "font-size": "15px", "font-weight": "800"
             }, `Resultados das Janelas: [ ${frame.result.join(', ')} ]`));
         }
 
-        // ==========================================
-        // MONTAGEM FINAL
-        // ==========================================
         const wrapper = el("div", {
             class: "deque-canvas-wrapper",
             style: "display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;"

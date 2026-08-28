@@ -47,21 +47,14 @@ const THEORY_SECTIONS = [
 ];
 
 export function DequeControlPanel({ onPushBack, onPopFront, onPopBack, onSlidingWindow }) {
-    // ==========================================
-    // 1. OPERAÇÕES BÁSICAS (Inserção e Remoção)
-    // ==========================================
     const valueField = Field("Valor:", { inputMode: "numeric" });
 
-    // Push Back é a única inserção do algoritmo: quem "entra" numa deque
-    // monotônica sempre entra pelo final, passando pela poda de quem perdeu.
     const btnPushBack = el("button", {
         class: "btn btn--primary btn--block",
         type: "button",
         onclick: () => onPushBack(valueField.value)
     }, "Push Back");
 
-    // Pop Front / Pop Back seguem disponíveis: a frente expira pela janela,
-    // o final pode ser inspecionado manualmente.
     const outlineStyle = "border: 1px solid var(--blue-500); color: var(--blue-700); background: transparent;";
 
     const btnPopFront = el("button", {
@@ -84,9 +77,6 @@ export function DequeControlPanel({ onPushBack, onPopFront, onPopBack, onSliding
         el("div", { class: "form__row" }, btnPopFront, btnPopBack)
     );
 
-    // ==========================================
-    // 2. TEORIA DA ESTRUTURA (modal, padrão da árvore de segmentos)
-    // ==========================================
     const theory = TheoryBox(
         "Deque Monotônica",
         THEORY_SECTIONS,
@@ -96,9 +86,6 @@ export function DequeControlPanel({ onPushBack, onPopFront, onPopBack, onSliding
         }
     );
 
-    // ==========================================
-    // 3. CONTEÚDO DO ACCORDION (Janela Deslizante)
-    // ==========================================
     const seqField = Field("Sequência inicial:", { placeholder: "1, 3, -1, -3, 5, 3, 6" });
     const windowField = Field("Tamanho da janela:", { inputMode: "numeric", placeholder: "3" });
 
@@ -120,9 +107,6 @@ export function DequeControlPanel({ onPushBack, onPopFront, onPopBack, onSliding
 
     accordions[0].open();
 
-    // ==========================================
-    // 4. ESTRUTURA FINAL DO PAINEL
-    // ==========================================
     const feedback = el("p", { class: "feedback", role: "status", "aria-live": "polite" });
 
     const root = el("aside", { class: "panel" },
@@ -137,9 +121,6 @@ export function DequeControlPanel({ onPushBack, onPopFront, onPopBack, onSliding
         feedback
     );
 
-    // ==========================================
-    // 5. API EXPOSTA PARA O APP
-    // ==========================================
     return {
         root,
         setFeedback(text, kind = "info") {
