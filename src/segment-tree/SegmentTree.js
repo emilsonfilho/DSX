@@ -46,8 +46,11 @@ export class SegmentTree {
                 status: NodeStatus.IDLE,
                 isLeaf: true,
             };
-
-            this.recorder.saveFrame(`Nó folha criado no índice [${left}] com valor ${array[left]}`);
+            
+            this.recorder.saveFrame(
+                `Folha [${left}] criada com valor ${array[left]}.`,
+                "Representa um único elemento do array."
+            );
 
             return;
         }
@@ -70,7 +73,10 @@ export class SegmentTree {
             isLeaf: false
         };
 
-        this.recorder.saveFrame(`Merge no intervalo [${left}, ${right}]. Valor atualizado para ${this.tree[nodeIndex].value}.`);
+        this.recorder.saveFrame(
+            `Intervalo [${left}, ${right}] = ${this.tree[nodeIndex].value}.`,
+            "Resultado da combinação dos dois filhos."
+        );
     }
 
     pushDown(nodeIndex, left, right) {
@@ -79,7 +85,10 @@ export class SegmentTree {
         if (node.lazy === 0) return;
 
         node.status = NodeStatus.PUSHING_DOWN;
-        this.recorder.saveFrame(`Iniciando push down no nó ${nodeIndex} (intervalo [${left}, ${right}])`);
+        this.recorder.saveFrame(
+            `Propagando lazy em [${left}, ${right}].`,
+            `Valor pendente: ${node.lazy}.`
+        );
 
         let middle = Math.floor((left + right) / 2);
         let leftChild = 2 * nodeIndex,
@@ -99,7 +108,10 @@ export class SegmentTree {
         node.lazy = 0;
         node.status = NodeStatus.IDLE;
 
-        this.recorder.saveFrame(`Push down concluído. Filhos herdaram as Lazy Tags.`);
+        this.recorder.saveFrame(
+            "Lazy propagada para os filhos.",
+            "A pendência deste nó foi removida."
+        );
     }
 
     updateRange(nodeIndex, left, right, qLeft, qRight, newValue) {
@@ -107,7 +119,10 @@ export class SegmentTree {
             return;
 
         this.tree[nodeIndex].status = NodeStatus.VISITING,
-        this.recorder.saveFrame(`Visitando o nó do intervalo [${left}, ${right}]`);
+        this.recorder.saveFrame(
+            `Visitando [${left}, ${right}].`,
+            `Atualização solicitada: [${qLeft}, ${qRight}].`
+        );
 
         if (left >= qLeft && right <= qRight) {
             let rangeSize = right - left + 1;
@@ -116,7 +131,10 @@ export class SegmentTree {
             this.tree[nodeIndex].lazy = this.operation.joinLazy(this.tree[nodeIndex].lazy, newValue)
             this.tree[nodeIndex].status = NodeStatus.LAZY_PENDING;
 
-            this.recorder.saveFrame(`Intervalo [${left}, ${right}] totalmete coberto. Valor atualizado e Lazy Tag aplicada.`);
+            this.recorder.saveFrame(
+                `[${left}, ${right}] totalmente coberto.`,
+                `Valor atualizado para ${this.tree[nodeIndex].value}; lazy registrada.`
+            );
 
             return;
         }
@@ -134,7 +152,10 @@ export class SegmentTree {
         this.tree[nodeIndex].value = this.operation.merge(leftValue, rightValue);
 
         this.tree[nodeIndex].status = NodeStatus.UPDATING;
-        this.recorder.saveFrame(`Merge no intervalo [${left}, ${right}]. Novo valor: ${this.tree[nodeIndex].value}`);
+        this.recorder.saveFrame(
+            `[${left}, ${right}] recalculado: ${this.tree[nodeIndex].value}.`,
+            "Os filhos foram combinados novamente."
+        );
 
         this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
     }
@@ -142,14 +163,20 @@ export class SegmentTree {
     // Atribui um novo valor a uma única posição do array
     updatePoint(nodeIndex, left, right, position, newValue) {
         this.tree[nodeIndex].status = NodeStatus.VISITING;
-        this.recorder.saveFrame(`Descendo pelo nó do intervalo [${left}, ${right}] em busca do índice [${position}]`);
+        this.recorder.saveFrame(
+            `Visitando [${left}, ${right}].`,
+            `Buscando o índice [${position}].`
+        );
 
         if (left === right) {
             this.tree[nodeIndex].value = newValue;
             this.tree[nodeIndex].lazy = 0;
             this.tree[nodeIndex].status = NodeStatus.UPDATING;
 
-            this.recorder.saveFrame(`Folha [${position}] recebeu o valor ${newValue}.`);
+                this.recorder.saveFrame(
+                    `Índice [${position}] atualizado para ${newValue}.`,
+                    "A folha recebeu o novo valor."
+                );
             return;
         }
 
@@ -168,7 +195,10 @@ export class SegmentTree {
         this.tree[nodeIndex].value = this.operation.merge(leftValue, rightValue);
 
         this.tree[nodeIndex].status = NodeStatus.UPDATING;
-        this.recorder.saveFrame(`Merge no intervalo [${left}, ${right}]. Novo valor: ${this.tree[nodeIndex].value}`);
+        this.recorder.saveFrame(
+            `[${left}, ${right}] recalculado: ${this.tree[nodeIndex].value}.`,
+            "Atualização refletida nos ancestrais."
+        );
 
         this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
     }
@@ -180,12 +210,18 @@ export class SegmentTree {
         let originalStatus = this.tree[nodeIndex].status;
 
         this.tree[nodeIndex].status = NodeStatus.VISITING;
-        this.recorder.saveFrame(`Consultando nó no intervalo [${left}, ${right}]`);
+        this.recorder.saveFrame(
+            `Consultando [${left}, ${right}].`,
+            `Intervalo desejado: [${qLeft}, ${qRight}].`
+        );
 
         if (left >= qLeft && right <= qRight) {
             this.tree[nodeIndex].status = originalStatus;
 
-            this.recorder.saveFrame(`Intervalo [${left}, ${right}] está dentro da query. Retornando valor: ${this.tree[nodeIndex].value}`);
+            this.recorder.saveFrame(
+                `[${left}, ${right}] está totalmente dentro.`,
+                `Retorna ${this.tree[nodeIndex].value}.`
+            );
 
             return this.tree[nodeIndex].value;
         }
@@ -201,37 +237,43 @@ export class SegmentTree {
 
         let combinedResult = this.operation.merge(leftResult, rightResult);
 
-        this.recorder.saveFrame(`Resultado da query no intervalo [${left}, ${right}] é ${combinedResult}`);
+        this.recorder.saveFrame(
+            `Resultado em [${left}, ${right}]: ${combinedResult}.`,
+            "Combinação dos resultados dos filhos."
+        );
+
         return combinedResult;
     }
 
 
     runPointUpdate(position, newValue) {
         this._resetStatuses();
-        this.recorder.beginRecording(`Atualizando o índice [${position}] para o valor ${newValue}.`);
+        this.recorder.beginRecording(`Atualizar índice [${position}] → ${newValue}.`);
 
         this.updatePoint(1, 0, this.size - 1, position, newValue);
         this.array[position] = newValue;
 
         this._resetStatuses();
-        this.recorder.endRecording(`Índice [${position}] atualizado para ${newValue}.`);
+        this.recorder.endRecording("Atualização concluída.", `Índice [${position}] = ${newValue}.`);
 
         return this.recorder.getHistory();
     }
 
     runRangeUpdate(qLeft, qRight, delta) {
-        this.recorder.beginRecording(`Somando ${delta} a cada elemento do intervalo [${qLeft}, ${qRight}].`);
+        this.recorder.beginRecording(`Atualizando o intervalo [${qLeft}, ${qRight}].`, `Valor da operação: ${delta}.`);
         this.updateRange(1, 0, this.size - 1, qLeft, qRight, delta);
-        for (let i = qLeft; i <= qRight; i++) this.array[i] += delta;
-        this.recorder.endRecording(`Intervalo [${qLeft}, ${qRight}] atualizado com +${delta}.`);
+        // Usa a própria estratégia pra aplicar o delta: XOR/AND não são aditivos como soma/mín/máx
+        for (let i = qLeft; i <= qRight; i++)
+            this.array[i] = this.operation.applyLazy(this.array[i], delta, 1);
+        this.recorder.endRecording("Atualização de intervalo concluída.", `Intervalo: [${qLeft}, ${qRight}].`);
 
         return this.recorder.getHistory();
     }
 
     runRangeQuery(qLeft, qRight) {
-        this.recorder.beginRecording(`Consultando o intervalo [${qLeft}, ${qRight}].`);
+        this.recorder.beginRecording(`Consultar intervalo [${qLeft}, ${qRight}].`);
         const result = this.queryRange(1, 0, this.size - 1, qLeft, qRight);
-        this.recorder.endRecording(`Consulta em [${qLeft}, ${qRight}] concluída. Resultado: ${result}`);
+        this.recorder.endRecording(`Consulta concluída: ${result}.`, `Intervalo [${qLeft}, ${qRight}].`);
 
         return { result, history: this.recorder.getHistory() };
     }

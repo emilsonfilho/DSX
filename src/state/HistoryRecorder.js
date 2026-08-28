@@ -27,8 +27,9 @@ export class HistoryRecorder {
      * @returns {void}
      */
     beginRecording(message) {
+    beginRecording(message, detail = "") {
         this.history = [];
-        this.saveFrame(message);
+        this.saveFrame(message, detail);
     }
 
     /**
@@ -61,6 +62,16 @@ export class HistoryRecorder {
      */
     endRecording(message) {
         this.saveFrame(message);
+    saveFrame(message, detail = "") {
+        this.history.push({
+            message,
+            detail,
+            ...this.takeSnapshot()
+        })
+    }
+
+    endRecording(message, detail = "") {
+        this.saveFrame(message, detail);
     }
 
     /**
