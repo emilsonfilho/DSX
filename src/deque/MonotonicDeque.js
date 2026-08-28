@@ -184,81 +184,129 @@ export class MonotonicDeque {
      * and the history of the algorithm's execution.
      */
     runSlidingWindow(array, k) {
-        this.recorder.beginRecording(`Iniciando Janela Deslizante de tamanho ${k}.`);
-        while (!this.empty()) this.deque.pop();
+        this.recorder.beginRecording(
+            `Iniciando a Janela Deslizante com tamanho ${k}.`,
+            `Vamos processar o array: [ ${array.join(', ')} ]`
+        );
 
+        while (!this.empty()) this.deque.pop();
         const result = [];
 
         for (let i = 0; i < array.length; i++) {
             const current = array[i];
             const cand = [current, i];
 
-            // Helper para injetar os estados extras no frame (Candidato e Resultado)
             const baseState = () => ({ candidate: cand, result: [...result] });
 
-            this.recorder.saveFrame(`i=${i}, A[${i}]=${current}`, { ...baseState(), status: 'idle' });
+            // Calcula o limite atual da janela para mostrar na descrição
+            const windowStart = Math.max(0, i - k + 1);
+            const windowInfo = `A janela atual abrange os índices de <strong>${windowStart} até ${i}</strong>.`;
+
+            // Helper para formatar a lista de resultados no rodapé e adicionar os detalhes da janela
+            const getDetail = (extraInfo = "") => {
+                const resStr = result.length > 0
+                    ? `Resultados já encontrados: [ ${result.join(', ')} ]`
+                    : `Nenhuma janela foi totalmente percorrida ainda.`;
+                return extraInfo ? `${extraInfo}<br><br>${resStr}` : resStr;
+            };
+
+            this.recorder.saveFrame(
+                `<strong>Analisando o elemento ${current}</strong> (que está na posição ${i}).`,
+                getDetail(windowInfo),
+                { ...baseState(), status: 'idle' }
+            );
 
             // ==========================================
-            // 1. POP EXPIRED (Verifica o limite da Janela)
+            // 1. POP EXPIRED (Limpando o que ficou pra trás)
             // ==========================================
             if (i >= k) {
                 const expiredIdx = i - k;
-                // Lembrando que no nosso Deque.js, o getter front devolve o [valor, índice]
                 const isFrontExpired = !this.empty() && this.deque.front[1] === expiredIdx;
 
-                const msg = `Janela (${i - k + 1}..${i}) → Saiu ${expiredIdx}. A[${expiredIdx}] ∈ L? ${isFrontExpired ? 'YES' : 'NO'}`;
-
                 if (isFrontExpired) {
-                    // Fica vermelho apontando pro primeiro elemento
-                    this.recorder.saveFrame(msg, { ...baseState(), status: 'expired', target: 'front' });
+                    this.recorder.saveFrame(
+                        `A janela andou! O elemento que está no início da fila pertence ao índice ${expiredIdx}, que já ficou para trás.`,
+                        getDetail(windowInfo),
+                        { ...baseState(), status: 'expired', target: 'front' }
+                    );
                     this.deque.shift();
-                    this.recorder.saveFrame(`${msg}\nRemovido da frente.`, { ...baseState(), status: 'idle' });
+                    this.recorder.saveFrame(
+                        `Descartamos o elemento antigo da frente da fila.`,
+                        getDetail(windowInfo),
+                        { ...baseState(), status: 'idle' }
+                    );
                 } else {
-                    this.recorder.saveFrame(msg, { ...baseState(), status: 'idle' });
+                    this.recorder.saveFrame(
+                        `A janela andou, mas o elemento no início da fila ainda está dentro da área abrangida pela janela.`,
+                        getDetail(windowInfo),
+                        { ...baseState(), status: 'idle' }
+                    );
                 }
             }
 
             // ==========================================
-            // 2. PUSH (Dança da Monotonicidade)
+            // 2. PUSH (A dança para manter a fila organizada)
             // ==========================================
             while (!this.empty()) {
                 const backVal = this.deque.back[0];
-
-                // Frame 1: Laranja (Avaliando)
-                this.recorder.saveFrame(`Comparando candidato ${current} com o fim da deque (${backVal})...`, { ...baseState(), status: 'compare', target: 'back' });
+                this.recorder.saveFrame(
+                    `Vamos comparar o candidato <strong>${current}</strong> com o último elemento da fila (<strong>${backVal}</strong>).`,
+                    getDetail(windowInfo),
+                    { ...baseState(), status: 'compare', target: 'back' }
+                );
 
                 if (!this.comparator(backVal, current)) {
-                    // Frame 2: Vermelho (Violação) -> REMOVE
-                    this.recorder.saveFrame(`${current} < ${backVal} → REMOVE`, { ...baseState(), status: 'violate', target: 'back' });
+                    // Quebra a regra: Remove
+                    this.recorder.saveFrame(
+                        `O candidato ${current} tem prioridade sobre o ${backVal} (satisfaz a nossa regra). Como o ${current} é mais recente, o ${backVal} tornou-se inútil para ser a resposta!`,
+                        getDetail(windowInfo),
+                        { ...baseState(), status: 'violate', target: 'back' }
+                    );
                     this.deque.pop();
                 } else {
-                    // Frame 2: Verde (Válido) -> ADD
-                    this.recorder.saveFrame(`${current} ≮ ${backVal} → ADD`, { ...baseState(), status: 'valid', target: 'back' });
+                    // Segue a regra: Mantém
+                    this.recorder.saveFrame(
+                        `O candidato ${current} <strong>não</strong> tem prioridade sobre o ${backVal}, então paramos de descartar elementos.`,
+                        getDetail(windowInfo),
+                        { ...baseState(), status: 'valid', target: 'back' }
+                    );
                     break;
                 }
             }
 
             if (this.empty()) {
-                this.recorder.saveFrame(`L = ∅ → Não tem ninguém, ADD`, { ...baseState(), status: 'idle' });
+                this.recorder.saveFrame(
+                    `A fila ficou vazia.`,
+                    getDetail(windowInfo),
+                    { ...baseState(), status: 'idle' }
+                );
             }
 
             this.deque.push([current, i]);
-
-            // Mostra como a deque ficou após a inserção ⟨ 3, 5 ⟩
-            const elementsStr = this.deque.toArray().map(e => e[0]).join(',');
-            this.recorder.saveFrame(`L_f = ⟨ ${elementsStr} ⟩`, { result: [...result] });
+            this.recorder.saveFrame(
+                `Adicionamos o candidato ${current} ao final da fila.`,
+                getDetail(windowInfo),
+                { result: [...result] }
+            );
 
             // ==========================================
-            // 3. COLETAR RESULTADO DA JANELA
+            // 3. COLETAR RESULTADO DA JANELA ATUAL
             // ==========================================
             if (i >= k - 1) {
                 const best = this.deque.front[0];
                 result.push(best);
-                this.recorder.saveFrame(`JANELA ${i - k + 2}: L[0] = ${best}`, { result: [...result] });
+                this.recorder.saveFrame(
+                    `A janela de tamanho ${k} está completa! A resposta dela é sempre o que sobreviveu na frente da fila: <strong>${best}</strong>.`,
+                    getDetail(windowInfo),
+                    { result: [...result] }
+                );
             }
         }
 
-        this.recorder.endRecording(`Resultado Final:\n[ ${result.join(', ')} ]`);
+        this.recorder.endRecording(
+            `<strong>Janela Deslizante Finalizada!</strong>`,
+            `Lista final de resultados: [ ${result.join(', ')} ]`
+        );
         return { result, history: this.recorder.getHistory() };
     }
 }

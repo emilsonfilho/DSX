@@ -145,13 +145,6 @@ export class DequeRenderer {
             style: "display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;"
         }, svg);
 
-        if (frame.message) {
-            // Adicionado white-space: pre-wrap para respeitar as quebras de linha (\n) do algoritmo
-            wrapper.appendChild(el("p", {
-                style: "color: var(--ink-900); font-size: 15px; margin-top: 16px; font-weight: 600; text-align: center; white-space: pre-wrap;"
-            }, frame.message));
-        }
-
         this.container.replaceChildren(wrapper);
     }
 }
