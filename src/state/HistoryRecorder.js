@@ -60,9 +60,14 @@ export class HistoryRecorder {
      * Description associated with the final snapshot.
      * @returns {void}
      */
-    endRecording(message, detail = "") {
-        this.saveFrame(message, detail);
+    saveFrame(message, detail = "") {
+        this.history.push({
+            message,
+            detail,
+            ...this.takeSnapshot()
+        })
     }
+
 
     /**
      * Returns all snapshots recorded during the current recording.
