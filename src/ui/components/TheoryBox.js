@@ -16,37 +16,25 @@ export function TheoryBox(title, sections, { description = "" } = {}) {
     const sectionGrid = el(
         "div",
         { class: "theory__sections" },
-        sections.map(({ heading, text, items = [] }) =>
+        sections.map(({ heading, text, items = [], example }) =>
             el(
                 "section",
                 { class: "theory__section" },
 
-                el(
-                    "h3",
-                    { class: "theory__heading" },
-                    heading
-                ),
+                el("h3", { class: "theory__heading" }, heading),
 
-                text
-                    ? el(
-                        "p",
-                        { class: "theory__text" },
-                        text
+                text ? el("p", { class: "theory__text" }, text) : null,
+
+                items.length
+                    ? el("ul", { class: "theory__list" },
+                        items.map((item) => el("li", { class: "theory__list-item" }, item))
                     )
                     : null,
 
-                items.length
-                    ? el(
-                        "ul",
-                        { class: "theory__list" },
-
-                        items.map((item) =>
-                            el(
-                                "li",
-                                { class: "theory__list-item" },
-                                item
-                            )
-                        )
+                example
+                    ? el("div", { class: "theory__example" },
+                        el("span", { class: "theory__example-label" }, "Exemplo"),
+                        el("p", { class: "theory__example-text" }, example)
                     )
                     : null
             )

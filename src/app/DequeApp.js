@@ -19,7 +19,6 @@ export class DequeApp {
         // 1. Instancia o Painel de Controle (com todos os callbacks)
         this.panel = DequeControlPanel({
             onPushBack: (value) => this.handlePushBack(value),
-            onPushFront: (value) => this.handlePushFront(value),
             onPopFront: () => this.handlePopFront(),
             onPopBack: () => this.handlePopBack(),
             onSlidingWindow: (seq, windowSize) => this.handleSlidingWindow(seq, windowSize),
@@ -58,7 +57,7 @@ export class DequeApp {
         // Monta a estrutura da página
         this.root.replaceChildren(
             el("main", { class: "page" },
-                el("h1", { class: "page__title" }, "Visualizador de Monotonic Deque"),
+                el("h1", { class: "page__title" }, "Visualizador de Deque Monotônica"),
                 el("div", { class: "workspace" },
                     // Lado esquerdo: Renderização + Controles de vídeo
                     el("section", { class: "tree-card" }, canvas, this.playback.root),
@@ -91,17 +90,6 @@ export class DequeApp {
 
         this.panel.clearValueInput();
         this.panel.setFeedback(`Valor ${parsed.value} empurrado (Push) no Deque.`, "success");
-    }
-
-    handlePushFront(valueText) {
-        const parsed = parseNumber(valueText, "Valor");
-        if (!parsed.ok) return this.panel.setFeedback(parsed.error, "error");
-
-        const history = this.deque.runPushFront(parsed.value, this.manualIndex++);
-        this.player.loadHistory(history);
-
-        this.panel.clearValueInput();
-        this.panel.setFeedback(`Valor ${parsed.value} empurrado (Push) no Front.`, "success");
     }
 
     handlePopFront() {

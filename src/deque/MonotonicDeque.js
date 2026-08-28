@@ -124,16 +124,6 @@ export class MonotonicDeque {
         return this.recorder.getHistory();
     }
 
-    runPushFront(value, index) {
-        this.recorder.beginRecording(`Iniciando inserção manual na frente.`);
-
-        // Inserção direta na frente (usando o unshift do seu Deque.js)
-        this.deque.unshift([value, index]);
-
-        this.recorder.endRecording(`Valor ${value} empurrado (Push) no Front.`);
-        return this.recorder.getHistory();
-    }
-
     runPopFront() {
         this.recorder.beginRecording(`Removendo elemento da frente (Pop Front).`);
 
