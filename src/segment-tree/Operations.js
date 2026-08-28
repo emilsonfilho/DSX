@@ -35,6 +35,10 @@ export const GCDStrategy = {
     joinLazy: (oldLazy, newLazy) => oldLazy + newLazy,
 }
 
+export const AscendingComparator = (a, b) => a <= b
+
+export const DescendingComparator = (a, b) => a >= b
+
 /**
  * Catálogo das operações expostas na interface
  */
