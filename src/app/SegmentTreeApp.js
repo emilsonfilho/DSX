@@ -1,197 +1,122 @@
-import { SegmentTree } from "../segment-tree/SegmentTree.js";
-import { Strategies } from "../segment-tree/Operations.js";
-import { NodeStatus } from "../segment-tree/Enums.js";
-import { StateManager } from "../state/StateManager.js";
+import { el } from "../ui/dom.js";
 
-import { el, FeedbackType, formatValue } from "../ui/dom.js";
-import { TreeRenderer } from "../visualization/TreeRenderer.js";
-import { ControlPanel } from "../ui/ControlPanel.js";
-import { Playback } from "../ui/components/Playback.js";
-import { parseArray, parseIndex, parseNumber, parseRange, COMFORTABLE_ELEMENTS } from "../ui/validation.js";
+import { LazySegmentTreeApp }
+    from "./LazySegmentTreeApp.js";
 
-const LEGEND = [
-    [NodeStatus.IDLE, "Em repouso"],
-    [NodeStatus.VISITING, "Visitando"],
-    [NodeStatus.UPDATING, "Atualizado"],
-    [NodeStatus.LAZY_PENDING, "Lazy pendente"],
-    [NodeStatus.PUSHING_DOWN, "Push down"],
-];
+import { PersistentSegmentTreeApp }
+    from "./PersistentSegmentTreeApp.js";
 
-/**
- * Controlador da aplicação, traduz eventos da UI em chamadas ao core
- * e devolve o histórico gravado para o StateManager reproduzir
- */
+import {
+    SegmentTreeMode,
+    SegmentTreeModeSelector,
+} from "../ui/components/SegmentTreeModeSelector.js";
+
+
 export class SegmentTreeApp {
     constructor(root) {
         this.root = root;
-        this.tree = null;
 
-        this.panel = ControlPanel({
-            onBuild: (input) => this.handleBuild(input),
-            onPointUpdate: (input) => this.handlePointUpdate(input),
-            onRangeQuery: (input) => this.handleRangeQuery(input),
-            onRangeUpdate: (input) => this.handleRangeUpdate(input),
-            onStrategyChange: (strategyKey) => this.handleStrategyChange(strategyKey),
-        });
+        this.currentMode = null;
+        this.currentApp = null;
 
-        this.playback = Playback({
-            onPrev: () => this.player.prev(),
-            onNext: () => this.player.next(),
-            onToggle: () => this.player.toggle(),
-            onScrub: (index) => this.player.goTo(index),
-            onSpeed: (ms) => this.player.setSpeed(ms),
-        });
+        this.content = el(
+            "div",
+            {
+                class:
+                    "segment-tree-mode-content",
+            }
+        );
 
-        this.player = new StateManager();
-        this.player.on('frameChange', (frame, index, total) => {
-            this.renderer.render(frame);
-            this.playback.update(frame, index, total);
-        });
-        this.player.on('playStateChange', (isPlaying) => this.playback.setPlaying(isPlaying));
+        this.modeSelector =
+            SegmentTreeModeSelector({
+                value: SegmentTreeMode.LAZY,
 
-        this.player.setSpeed(600);
+                onChange: (mode) => {
+                    this.selectMode(mode);
+                },
+            });
 
         this.mount();
-        this.panel.setOperationsEnabled(false);
+
+        /*
+         * Lazy Propagation é sempre a implementação
+         * aberta inicialmente.
+         */
+        this.selectMode(
+            SegmentTreeMode.LAZY
+        );
     }
 
     mount() {
-        const canvas = el("div", { class: "tree-canvas" });
+        const header = el(
+            "div",
+            {
+                class:
+                    "page__header page__header--segment-tree",
+            },
 
-        const legend = el(
-            "ul",
-            { class: "legend" },
-            LEGEND.map(([status, label]) =>
-                el(
-                    "li",
-                    { class: "legend__item" },
-                    el("span", { class: `legend__dot legend__dot--${status}` }),
-                    label
-                )
-            )
+            el(
+                "h1",
+                { class: "page__title" },
+                "Visualizador de Árvore de Segmentos"
+            ),
+
+            this.modeSelector.root
         );
 
         this.root.replaceChildren(
             el(
                 "main",
                 { class: "page" },
-                el("h1", { class: "page__title" }, "Visualizador de Árvore de Segmentos"),
-                el(
-                    "div",
-                    { class: "workspace" },
-                    el("section", { class: "tree-card" }, canvas, legend, this.playback.root),
-                    this.panel.root
-                )
+
+                header,
+
+                this.content
             )
         );
-
-        this.renderer = new TreeRenderer(canvas);
     }
 
-    // Operações
+    selectMode(mode) {
+        if (mode === this.currentMode) {
+            return;
+        }
 
-    handleBuild({ array, strategyKey }) {
-        const parsed = parseArray(array);
-        if (!parsed.ok) return this.fail(parsed.error);
+        /*
+         * Desmonta completamente a implementação
+         * anterior antes de criar a próxima.
+         */
+        this.currentApp?.destroy?.();
 
-        const option = Strategies[strategyKey];
-        this.tree = new SegmentTree(parsed.value, option.strategy);
+        this.currentApp = null;
 
-        this.player.loadHistory(this.tree.recorder.getHistory());
-        this.panel.setOperationsEnabled(true);
-        this.panel.clearOperationInputs();
+        this.content.replaceChildren();
 
-        const warning =
-            parsed.value.length > COMFORTABLE_ELEMENTS
-                ? " (arrays grandes ficam apertados na tela)"
-                : "";
+        switch (mode) {
+            case SegmentTreeMode.PERSISTENT:
+                this.currentApp =
+                    new PersistentSegmentTreeApp(
+                        this.content
+                    );
+                break;
 
-        this.panel.setFeedback(
-            `Árvore de ${option.label} construída com ${parsed.value.length} elemento(s).${warning}`,
-            FeedbackType.SUCCESS
-        );
+            case SegmentTreeMode.LAZY:
+            default:
+                this.currentApp =
+                    new LazySegmentTreeApp(
+                        this.content
+                    );
+                break;
+        }
+
+        this.currentMode = mode;
     }
 
-    handlePointUpdate({ index, value }) {
-        if (!this.requireTree()) return;
+    destroy() {
+        this.currentApp?.destroy?.();
 
-        const position = parseIndex(index, "Digite o índice", this.tree.size);
-        if (!position.ok) return this.fail(position.error);
+        this.currentApp = null;
+        this.currentMode = null;
 
-        const newValue = parseNumber(value, "Insira o valor");
-        if (!newValue.ok) return this.fail(newValue.error);
-
-        this.player.loadHistory(this.tree.runPointUpdate(position.value, newValue.value));
-        this.panel.setFeedback(
-            `Índice [${position.value}] recebeu o valor ${newValue.value}.`,
-            FeedbackType.SUCCESS
-        );
-    }
-
-    handleRangeUpdate({ start, end, value }) {
-        if (!this.requireTree()) return;
-
-        const range = parseRange(start, end, this.tree.size);
-        if (!range.ok) return this.fail(range.error);
-
-        const delta = parseNumber(value, "Insira o valor");
-        if (!delta.ok) return this.fail(delta.error);
-
-        const [left, right] = range.value;
-        const option = Object.values(Strategies).find((item) => item.strategy === this.tree.operation);
-
-        this.player.loadHistory(this.tree.runRangeUpdate(left, right, delta.value));
-        this.panel.setFeedback(
-            `${option?.updateVerb ?? "Atualizado"} ${delta.value} em cada elemento de [${left}, ${right}] via lazy propagation.`,
-            FeedbackType.SUCCESS
-        );
-    }
-
-    handleRangeQuery({ start, end }) {
-        if (!this.requireTree()) return;
-
-        const range = parseRange(start, end, this.tree.size);
-        if (!range.ok) return this.fail(range.error);
-
-        const [left, right] = range.value;
-        const { result, history } = this.tree.runRangeQuery(left, right);
-        const label = Object.values(Strategies).find((item) => item.strategy === this.tree.operation);
-
-        this.player.loadHistory(history);
-        this.panel.setFeedback(
-            `${label?.resultLabel ?? "Resultado"} de [${left}, ${right}] = ${formatValue(result)}`,
-            FeedbackType.RESULT
-        );
-    }
-
-    // Trocar o tipo de operação apaga a árvore atual, mas preserva o array digitado
-    handleStrategyChange(strategyKey) {
-        if (!this.tree) return;
-
-        this.tree = null;
-        this.player.pause();
-        this.player.loadHistory([]);
-        this.renderer.clear("Operação alterada. Clique em “Construir árvore” para aplicá-la.");
-        this.playback.reset();
-        this.panel.setOperationsEnabled(false);
-
-        const option = Strategies[strategyKey];
-        this.panel.setFeedback(
-            `Operação alterada para ${option.label}. Construa a árvore novamente para ver o efeito.`,
-            FeedbackType.INFO
-        );
-    }
-
-    // Utils
-
-    requireTree() {
-        if (this.tree) return true;
-
-        this.fail("Construa uma árvore antes de executar operações.");
-        return false;
-    }
-
-    fail(message) {
-        this.panel.setFeedback(message, FeedbackType.ERROR);
+        this.root.replaceChildren();
     }
 }

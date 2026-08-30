@@ -34,4 +34,8 @@
     --shadow-md: 0 6px 24px rgba(16, 20, 38, 0.08);
 
     --font-sans: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+    /* árvore persistente */
+    --persistent-new: #7c3aed;
+    --persistent-shared: #1b2fcb;
 }

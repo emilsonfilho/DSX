@@ -56,6 +56,7 @@ import { el } from "../dom";
 export function AppTabs(appsConfig, appContainer) {
     const buttons = new Map();
     let currentAppKey = null;
+    let currentAppInstance = null;
 
     const toggleContainer = el("div", { class: "tabs-toggle", role: "tablist" });
 
@@ -74,20 +75,56 @@ export function AppTabs(appsConfig, appContainer) {
     const root = el("header", { class: "tabs-header" }, toggleContainer);
 
     function selectApp(key) {
-        if (key === currentAppKey) return;
-        currentAppKey = key;
-
-        // Update buttons
-        for (const [appKey, { button }] of buttons) {
-            const isActive = appKey === currentAppKey;
-            button.className = isActive ? "btn btn--primary" : "btn";
-            button.setAttribute("aria-selected", String(isActive));
+        if (key === currentAppKey) {
+            return;
         }
 
-        appContainer.innerHTML = "";
-        const selectedApp = buttons.get(key);
-        if (selectedApp && typeof selectedApp.initFn === 'function')
-            selectedApp.initFn(appContainer);
+        /*
+        * Encerra corretamente a aplicação anterior.
+        */
+        currentAppInstance?.destroy?.();
+
+        currentAppInstance = null;
+
+        currentAppKey = key;
+
+        for (const [appKey, { button }] of buttons) {
+            const isActive =
+                appKey === currentAppKey;
+
+            button.className =
+                isActive
+                    ? "btn btn--primary"
+                    : "btn";
+
+            button.setAttribute(
+                "aria-selected",
+                String(isActive)
+            );
+        }
+
+        appContainer.replaceChildren();
+
+        const selectedApp =
+            buttons.get(key);
+
+        if (
+            selectedApp &&
+            typeof selectedApp.initFn === "function"
+        ) {
+            const instance =
+                selectedApp.initFn(
+                    appContainer
+                );
+
+            if (
+                instance &&
+                typeof instance === "object"
+            ) {
+                currentAppInstance =
+                    instance;
+            }
+        }
     }
 
     return { root, selectApp };

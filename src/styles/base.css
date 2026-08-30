@@ -26,11 +26,30 @@ body {
 }
 
 .page__title {
-    margin: 0 0 28px;
+    margin: 0;
     color: var(--blue-600);
     font-size: clamp(24px, 3vw, 34px);
     font-weight: 800;
     letter-spacing: -0.01em;
+}
+
+.page__header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    margin-bottom: 28px;
+}
+
+.page__header--segment-tree {
+    width: 100%;
+}
+
+.segment-tree-mode-content {
+    width: 100%;
 }
 
 .workspace {
@@ -80,4 +99,130 @@ body {
     .workspace {
         grid-template-columns: minmax(0, 1fr);
     }
+}
+
+/* seletor da implementação da Segment Tree */
+
+.mode-selector {
+    position: relative;
+
+    flex: 0 0 auto;
+}
+
+.mode-selector__trigger {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    min-width: 190px;
+
+    padding: 10px 14px;
+
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+
+    background: var(--surface);
+
+    color: var(--blue-700);
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: var(--shadow-sm);
+
+    user-select: none;
+
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.mode-selector__trigger:hover {
+    border-color: var(--blue-500);
+
+    background: var(--blue-050);
+}
+
+.mode-selector__trigger::-webkit-details-marker {
+    display: none;
+}
+
+.mode-selector__trigger::marker {
+    content: "";
+}
+
+.mode-selector__arrow {
+    color: var(--ink-400);
+
+    transition: transform 0.15s ease;
+}
+
+.mode-selector[open]
+.mode-selector__arrow {
+    transform: rotate(180deg);
+}
+
+.mode-selector__menu {
+    position: absolute;
+
+    top: calc(100% + 7px);
+    right: 0;
+
+    z-index: 50;
+
+    display: flex;
+    flex-direction: column;
+
+    min-width: 100%;
+
+    padding: 6px;
+
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+
+    background: var(--surface);
+
+    box-shadow: var(--shadow-md);
+}
+
+.mode-selector__option {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border: 0;
+    border-radius: var(--radius-sm);
+
+    background: transparent;
+
+    color: var(--ink-600);
+
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.mode-selector__option:hover {
+    background: var(--blue-050);
+
+    color: var(--blue-700);
+}
+
+.mode-selector__option[
+    aria-checked="true"
+] {
+    background: var(--blue-050);
+
+    color: var(--blue-700);
+
+    font-weight: 800;
 }

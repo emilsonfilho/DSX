@@ -1,46 +1,71 @@
+/*
+   CARD E ÁREA DA ÁRVORE
+ */
+
 .tree-card {
     display: flex;
     flex-direction: column;
     gap: 14px;
+
+    min-height: 640px;
+
     padding: 18px;
+
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
+
     background: var(--surface);
+
     box-shadow: var(--shadow-sm);
-    min-height: 640px;
 }
 
 .tree-canvas {
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     min-height: 500px;
+
     overflow: auto;
+
     cursor: zoom-in;
+
     overscroll-behavior: contain;
 }
 
 .tree-canvas__zoom-wrap {
     display: inline-block;
+
     transform-origin: center center;
-    transition: transform 0.08s ease-out;
+
+    transition:
+        transform 0.08s ease-out;
+
     will-change: transform;
 }
 
 .tree-canvas__svg {
     display: block;
+
     width: 100%;
     height: auto;
+
     max-height: 560px;
 }
 
 .tree-canvas__empty {
     margin: 0;
+
     color: var(--ink-400);
+
     font-size: 13px;
 }
 
-/* nos e aretas*/
+
+/*
+   NÓS E ARESTAS
+ */
 
 .edge {
     stroke: var(--blue-500);
@@ -49,19 +74,27 @@
 
 .node__circle {
     fill: var(--status-idle);
+
     transition: fill 0.2s ease;
 }
 
 .node__circle--pending {
     fill: none;
+
     stroke: var(--line);
     stroke-width: 1.5;
+
     stroke-dasharray: 3 3;
 }
 
 .node--pending .node__range {
     fill: var(--ink-400);
 }
+
+
+/*
+   ESTADOS DA ÁRVORE
+ */
 
 .node--visiting .node__circle {
     fill: var(--status-visiting);
@@ -79,121 +112,470 @@
     fill: var(--status-pushing_down);
 }
 
+
+/*
+   TEXTO DOS NÓS
+ */
+
 .node__value {
     fill: #fff;
+
     font-size: 13px;
     font-weight: 700;
 }
 
 .node__range {
     fill: var(--ink-400);
+
     font-size: 10px;
     font-weight: 500;
 }
 
+
+/*
+   LAZY TAG
+ */
+
 .node__lazy-bg {
     fill: var(--status-lazy_pending);
+
     stroke: #fff;
     stroke-width: 2;
 }
 
 .node__lazy-text {
     fill: #fff;
+
     font-size: 9px;
     font-weight: 700;
 }
 
 
+/*
+   LEGENDA
+ */
 
 .legend {
     display: flex;
     flex-wrap: wrap;
+
     gap: 6px 16px;
+
     margin: 0;
+
     padding: 0 2px;
+
     list-style: none;
+
     font-size: 11.5px;
+
     color: var(--ink-600);
 }
 
 .legend__item {
     display: flex;
+
     align-items: center;
+
     gap: 6px;
 }
 
 .legend__dot {
     width: 9px;
     height: 9px;
+
     border-radius: 50%;
+
     background: var(--status-idle);
 }
 
-.legend__dot--visiting { background: var(--status-visiting); }
-.legend__dot--updating { background: var(--status-updating); }
-.legend__dot--lazy_pending { background: var(--status-lazy_pending); }
-.legend__dot--pushing_down { background: var(--status-pushing_down); }
+.legend__dot--visiting {
+    background: var(--status-visiting);
+}
+
+.legend__dot--updating {
+    background: var(--status-updating);
+}
+
+.legend__dot--lazy_pending {
+    background: var(--status-lazy_pending);
+}
+
+.legend__dot--pushing_down {
+    background: var(--status-pushing_down);
+}
 
 
+/*
+   PASSO A PASSO
+ */
 
 .playback {
     display: flex;
     flex-direction: column;
+
     gap: 10px;
+
     padding-top: 12px;
+
     border-top: 1px solid var(--line);
 }
 
 .playback__label {
+    color: var(--blue-700);
+
     font-size: 11px;
     font-weight: 700;
+
     letter-spacing: 0.04em;
+
     text-transform: uppercase;
-    color: var(--blue-700);
 }
 
 .playback__message {
-    margin: 0;
     min-height: 20px;
+
+    margin: 0;
+
+    color: var(--ink-900);
+
     font-size: 13px;
     font-weight: 600;
-    color: var(--ink-900);
 }
 
 .playback__detail {
     margin: 0;
+
+    color: var(--ink-600);
+
     font-size: 12.5px;
     line-height: 1.5;
-    color: var(--ink-600);
 }
 
 .playback__controls {
     display: flex;
+
     align-items: center;
+
     gap: 8px;
+
     flex-wrap: wrap;
 }
 
 .playback__scrubber {
     flex: 1;
+
     min-width: 120px;
+
     accent-color: var(--blue-700);
 }
 
 .playback__counter {
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink-600);
     min-width: 56px;
+
+    color: var(--ink-600);
+
+    font-size: 12px;
+
+    font-variant-numeric: tabular-nums;
+
     text-align: center;
 }
 
 .playback__speed {
-    font: inherit;
-    font-size: 12px;
     padding: 6px 8px;
+
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
+
     background: var(--surface);
+
     color: var(--ink-900);
+
+    font: inherit;
+    font-size: 12px;
+}
+
+
+/*
+   ÁRVORE PERSISTENTE
+ */
+
+/*
+ * Roxo:
+ * nó criado especificamente na versão atual.
+ */
+.node--persistent_new .node__circle {
+    fill: var(--persistent-new);
+}
+
+/*
+ * Cinza azulado:
+ * nó reaproveitado de uma versão anterior.
+ */
+.node--persistent_shared .node__circle {
+    fill: var(--persistent-shared);
+}
+
+.legend__dot--persistent_new {
+    background: var(--persistent-new);
+}
+
+.legend__dot--persistent_shared {
+    background: var(--persistent-shared);
+}
+
+
+/*
+   ÁREA VISUAL DA ÁRVORE PERSISTENTE
+ */
+
+/*
+ * Esta área existe para posicionar as setas
+ * nas laterais da árvore.
+ *
+ * Ela não inclui a timeline das versões.
+ */
+.persistent-tree-stage {
+    position: relative;
+
+    display: flex;
+
+    align-items: stretch;
+
+    width: 100%;
+
+    min-height: 500px;
+}
+
+/*
+ * Reserva um pequeno espaço nas duas laterais
+ * para que as setas não fiquem sobre os nós.
+ */
+.persistent-tree-stage .tree-canvas {
+    width: 100%;
+
+    padding-left: 62px;
+    padding-right: 62px;
+}
+
+
+/*
+   BOTÕES DE VERSÃO NAS LATERAIS
+ */
+
+.version-nav__arrow {
+    position: absolute;
+
+    top: 50%;
+
+    z-index: 10;
+
+    transform: translateY(-50%);
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 46px;
+    height: 46px;
+
+    padding: 0;
+
+    border: 1px solid var(--line);
+    border-radius: 50%;
+
+    background: var(--surface);
+
+    color: var(--blue-700);
+
+    font: inherit;
+    font-size: 24px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: var(--shadow-md);
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.version-nav__arrow--previous {
+    left: 10px;
+}
+
+.version-nav__arrow--next {
+    right: 10px;
+}
+
+.version-nav__arrow:hover:not(:disabled) {
+    border-color: var(--blue-700);
+
+    background: var(--blue-700);
+
+    color: #fff;
+
+    transform:
+        translateY(-50%)
+        scale(1.06);
+}
+
+.version-nav__arrow:disabled {
+    opacity: 0.25;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+
+/*
+   HISTÓRICO DE VERSÕES
+ */
+
+/*
+ * Fica ABAIXO da árvore.
+ */
+.version-nav {
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 14px 10px 4px;
+
+    border-top: 1px solid var(--line);
+}
+
+.version-nav__info {
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 2px;
+
+    min-width: 0;
+
+    text-align: center;
+}
+
+.version-nav__current {
+    color: var(--blue-700);
+
+    font-size: 14px;
+}
+
+.version-nav__parent {
+    color: var(--ink-400);
+
+    font-size: 11px;
+}
+
+
+/*
+   TIMELINE DAS VERSÕES
+ */
+
+.version-nav__timeline {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    max-width: 100%;
+
+    overflow-x: auto;
+
+    padding: 4px 8px 6px;
+}
+
+.version-nav__version {
+    flex: 0 0 auto;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    padding: 0;
+
+    border: 1px solid var(--line);
+    border-radius: 50%;
+
+    background: var(--surface);
+
+    color: var(--ink-600);
+
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.version-nav__version:hover {
+    border-color: var(--blue-500);
+
+    background: var(--blue-050);
+
+    color: var(--blue-700);
+}
+
+.version-nav__version[aria-current="true"] {
+    border-color: var(--blue-700);
+
+    background: var(--blue-700);
+
+    color: #fff;
+}
+
+
+/*
+   RESPONSIVIDADE DA ÁRVORE PERSISTENTE
+ */
+
+@media (max-width: 600px) {
+    .persistent-tree-stage .tree-canvas {
+        padding-left: 48px;
+        padding-right: 48px;
+    }
+
+    .version-nav__arrow {
+        width: 38px;
+        height: 38px;
+
+        font-size: 20px;
+    }
+
+    .version-nav__arrow--previous {
+        left: 4px;
+    }
+
+    .version-nav__arrow--next {
+        right: 4px;
+    }
+
+    .version-nav__version {
+        width: 30px;
+        height: 30px;
+    }
 }
