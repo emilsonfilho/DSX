@@ -24,7 +24,7 @@
     --status-idle: #1b2fcb;
     --status-visiting: #f5a623;
     --status-updating: #12a150;
-    --status-lazy_pending: #8b5cf6;
+    --status-lazy_pending:  #905beb;
     --status-pushing_down: #ef4a23;
 
     --radius-sm: 6px;
@@ -37,6 +37,6 @@
     --font-sans: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
 
     /* árvore persistente */
-    --persistent-new: #7c3aed;
+    --persistent-new: #905beb;
     --persistent-shared: #1b2fcb;
 }
