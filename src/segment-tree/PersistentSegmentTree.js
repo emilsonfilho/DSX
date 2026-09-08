@@ -361,7 +361,7 @@ export class PersistentSegmentTree {
 
         recorder.beginRecording(
             `Criando versão ${versionIndex}.`,
-            `Baseada na versão ${baseVersionIndex}; índice [${position}] receberá ${newValue}.`
+`           Alterando índice [${position}] a partir da versão ${baseVersionIndex}.`
         );
 
         for (
@@ -383,7 +383,7 @@ export class PersistentSegmentTree {
             ) {
                 recorder.saveFrame(
                     `Nova folha [${left}] criada.`,
-                    `Valor ${newValue}; a folha da versão anterior continua preservada.`
+                    `Valor ${newValue}; versão anterior preservada.`
                 );
 
                 continue;
@@ -391,7 +391,7 @@ export class PersistentSegmentTree {
 
             recorder.saveFrame(
                 `Novo nó [${left}, ${right}] criado.`,
-                `O filho ${created.sharedSide} foi reaproveitado da versão anterior.`
+                `Filho ${created.sharedSide} reaproveitado.`
             );
         }
 
@@ -399,7 +399,7 @@ export class PersistentSegmentTree {
 
         recorder.endRecording(
             `Versão ${versionIndex} criada.`,
-            `${createdNodes.length} novo(s) nó(s); o restante da árvore foi compartilhado.`
+            `${createdNodes.length} nó(s) novo(s); restante compartilhado.`
         );
 
         return {

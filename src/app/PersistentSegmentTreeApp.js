@@ -48,7 +48,7 @@ import {
 const LEGEND = [
     [
         NodeStatus.PERSISTENT_NEW,
-        "Novo nesta versão"
+        "Novo nó criado"
     ],
 
     [
@@ -63,7 +63,7 @@ const LEGEND = [
 
     [
         NodeStatus.UPDATING,
-        "Em atualização"
+        "Atualizado"
     ],
 ];
 
