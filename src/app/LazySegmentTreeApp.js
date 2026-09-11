@@ -100,8 +100,10 @@ export class LazySegmentTreeApp {
         const option = Strategies[strategyKey];
         this.tree = new SegmentTree(parsed.value, option.strategy);
 
+        this.renderer.resetZoom();
         this.player.loadHistory(this.tree.recorder.getHistory());
         this.panel.setOperationsEnabled(true);
+        this.panel.setRangeUpdateAvailable(this.tree.supportsRangeUpdate);
         this.panel.clearOperationInputs();
 
         const warning =
@@ -133,6 +135,9 @@ export class LazySegmentTreeApp {
 
     handleRangeUpdate({ start, end, value }) {
         if (!this.requireTree()) return;
+
+        if (!this.tree.supportsRangeUpdate)
+            return this.fail("Esta operação não suporta atualização de intervalo.");
 
         const range = parseRange(start, end, this.tree.size);
         if (!range.ok) return this.fail(range.error);

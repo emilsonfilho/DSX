@@ -7,18 +7,21 @@ export class SegmentTree {
         this.size = array.length;
         this.array = [...array];
         this.operation = strategy;
+        // Valor que marca "sem atualização pendente" (0 para a maioria, -1 para AND)
+        this.noLazy = strategy.lazyNeutral ?? 0;
 
         this.tree = new Array(this.size * 4).fill(null).map(() => ({
             id: null,
             range: [0, 0],
             value: this.operation.neutral,
-            lazy: 0,
+            lazy: this.noLazy,
             status: NodeStatus.IDLE,
             isLeaf: false,
         }));
-        
+
         this.recorder = new HistoryRecorder(() => ({
             size: this.size,
+            noLazy: this.noLazy,
             nodes: this.tree.map(node => ({ ...node, range: [...node.range] }))
         }));
 
@@ -32,8 +35,29 @@ export class SegmentTree {
     _resetStatuses() {
         for (const node of this.tree) {
             if (node.id === null) continue;
-            node.status = node.lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
+            node.status = node.lazy !== this.noLazy ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
         }
+    }
+
+    get supportsRangeUpdate() {
+        return this.operation.supportsRangeUpdate ?? true;
+    }
+
+    // Aplica uma atualização (delta ou lazy propagada) a um único nó.
+    // Folhas recebem só o valor final e nunca guardam lazy, pois não têm filhos para propagar.
+    _applyUpdate(nodeIndex, update, rangeSize) {
+        const node = this.tree[nodeIndex];
+
+        node.value = this.operation.applyLazy(node.value, update, rangeSize);
+
+        if (node.isLeaf) {
+            node.lazy = this.noLazy;
+            node.status = NodeStatus.UPDATING;
+            return;
+        }
+
+        node.lazy = this.operation.joinLazy(node.lazy, update);
+        node.status = NodeStatus.LAZY_PENDING;
     }
 
     build(array, nodeIndex, left, right) {
@@ -42,7 +66,7 @@ export class SegmentTree {
                 id: nodeIndex,
                 range: [left, right],
                 value: array[left],
-                lazy: 0,
+                lazy: this.noLazy,
                 status: NodeStatus.IDLE,
                 isLeaf: true,
             };
@@ -68,7 +92,7 @@ export class SegmentTree {
 
             value: this.operation.merge(leftValue, rightValue),
 
-            lazy: 0,
+            lazy: this.noLazy,
             status: NodeStatus.IDLE,
             isLeaf: false
         };
@@ -82,7 +106,7 @@ export class SegmentTree {
     pushDown(nodeIndex, left, right) {
         let node = this.tree[nodeIndex];
 
-        if (node.lazy === 0) return;
+        if (node.lazy === this.noLazy) return;
 
         node.status = NodeStatus.PUSHING_DOWN;
         this.recorder.saveFrame(
@@ -97,15 +121,10 @@ export class SegmentTree {
         let leftSize = middle - left + 1,
             rightSize = right - middle;
 
-        this.tree[leftChild].value = this.operation.applyLazy(this.tree[leftChild].value, node.lazy, leftSize);
-        this.tree[leftChild].lazy = this.operation.joinLazy(this.tree[leftChild].lazy, node.lazy);
-        this.tree[leftChild].status = NodeStatus.LAZY_PENDING;
+        this._applyUpdate(leftChild, node.lazy, leftSize);
+        this._applyUpdate(rightChild, node.lazy, rightSize);
 
-        this.tree[rightChild].value = this.operation.applyLazy(this.tree[rightChild].value, node.lazy, rightSize);
-        this.tree[rightChild].lazy = this.operation.joinLazy(this.tree[rightChild].lazy, node.lazy);
-        this.tree[rightChild].status = NodeStatus.LAZY_PENDING;
-
-        node.lazy = 0;
+        node.lazy = this.noLazy;
         node.status = NodeStatus.IDLE;
 
         this.recorder.saveFrame(
@@ -127,13 +146,13 @@ export class SegmentTree {
         if (left >= qLeft && right <= qRight) {
             let rangeSize = right - left + 1;
 
-            this.tree[nodeIndex].value = this.operation.applyLazy(this.tree[nodeIndex].value, newValue, rangeSize);
-            this.tree[nodeIndex].lazy = this.operation.joinLazy(this.tree[nodeIndex].lazy, newValue)
-            this.tree[nodeIndex].status = NodeStatus.LAZY_PENDING;
+            this._applyUpdate(nodeIndex, newValue, rangeSize);
 
             this.recorder.saveFrame(
                 `[${left}, ${right}] totalmente coberto.`,
-                `Valor atualizado para ${this.tree[nodeIndex].value}; lazy registrada.`
+                this.tree[nodeIndex].isLeaf
+                    ? `Valor atualizado para ${this.tree[nodeIndex].value}.`
+                    : `Valor atualizado para ${this.tree[nodeIndex].value}; lazy registrada.`
             );
 
             return;
@@ -157,7 +176,7 @@ export class SegmentTree {
             "Os filhos foram combinados novamente."
         );
 
-        this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
+        this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== this.noLazy ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
     }
 
     // Atribui um novo valor a uma única posição do array
@@ -170,7 +189,7 @@ export class SegmentTree {
 
         if (left === right) {
             this.tree[nodeIndex].value = newValue;
-            this.tree[nodeIndex].lazy = 0;
+            this.tree[nodeIndex].lazy = this.noLazy;
             this.tree[nodeIndex].status = NodeStatus.UPDATING;
 
                 this.recorder.saveFrame(
@@ -200,7 +219,7 @@ export class SegmentTree {
             "Atualização refletida nos ancestrais."
         );
 
-        this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== 0 ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
+        this.tree[nodeIndex].status = this.tree[nodeIndex].lazy !== this.noLazy ? NodeStatus.LAZY_PENDING : NodeStatus.IDLE;
     }
 
     queryRange(nodeIndex, left, right, qLeft, qRight) {
@@ -260,19 +279,26 @@ export class SegmentTree {
     }
 
     runRangeUpdate(qLeft, qRight, delta) {
+        if (!this.supportsRangeUpdate)
+            throw new Error("Esta operação não suporta atualização de intervalo.");
+
+        this._resetStatuses();
         this.recorder.beginRecording(`Atualizando o intervalo [${qLeft}, ${qRight}].`, `Valor da operação: ${delta}.`);
         this.updateRange(1, 0, this.size - 1, qLeft, qRight, delta);
         // Usa a própria estratégia pra aplicar o delta: XOR/AND não são aditivos como soma/mín/máx
         for (let i = qLeft; i <= qRight; i++)
             this.array[i] = this.operation.applyLazy(this.array[i], delta, 1);
+        this._resetStatuses();
         this.recorder.endRecording("Atualização de intervalo concluída.", `Intervalo: [${qLeft}, ${qRight}].`);
 
         return this.recorder.getHistory();
     }
 
     runRangeQuery(qLeft, qRight) {
+        this._resetStatuses();
         this.recorder.beginRecording(`Consultar intervalo [${qLeft}, ${qRight}].`);
         const result = this.queryRange(1, 0, this.size - 1, qLeft, qRight);
+        this._resetStatuses();
         this.recorder.endRecording(`Consulta concluída: ${result}.`, `Intervalo [${qLeft}, ${qRight}].`);
 
         return { result, history: this.recorder.getHistory() };

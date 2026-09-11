@@ -328,6 +328,8 @@ export class PersistentSegmentTreeApp {
                 option.strategy
             );
 
+        this.renderer.resetZoom();
+
         this.player.loadHistory(
             this.tree
                 .getBuildHistory()

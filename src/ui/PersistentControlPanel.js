@@ -3,6 +3,9 @@ import {
     FeedbackType
 } from "./dom.js";
 
+import { showToast }
+    from "./components/Toast.js";
+
 import { Field }
     from "./components/Field.js";
 
@@ -256,6 +259,8 @@ export function PersistentControlPanel({
 
             feedback.className =
                 `feedback feedback--${kind}`;
+
+            showToast(text, kind);
         },
 
         setOperationsEnabled(

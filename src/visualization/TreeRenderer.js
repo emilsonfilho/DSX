@@ -12,10 +12,15 @@ const ZOOM_MAX = 2.5;
 
 const ZOOM_SENSITIVITY = 0.0015;
 
+const INTERACTIVE_CLASS = "tree-canvas--interactive";
+const INTERACTIVE_TITLE = "Use o scroll para controlar o zoom. Duplo clique para restaurar.";
+
 export class TreeRenderer {
     constructor(container) {
         this.container = container;
         this.zoom = 1;
+        // Só existe algo pra dar zoom depois que uma árvore é desenhada
+        this.hasContent = false;
 
         this.zoomWrap = el(
             "div",
@@ -39,26 +44,30 @@ export class TreeRenderer {
         */
         this.container.addEventListener(
             "dblclick",
-            () => this.resetZoom()
+            () => {
+                if (this.hasContent) this.resetZoom();
+            }
         );
 
-        this.container.title =
-            "Use o scroll para controlar o zoom. Duplo clique para restaurar.";
-
-        this._applyZoom();
         this.clear();
     }
 
     clear(message = "Digite um array e clique em “Construir árvore”.") {
+        this.hasContent = false;
+        this.container.classList.remove(INTERACTIVE_CLASS);
+        this.container.removeAttribute("title");
+
         this.zoomWrap.replaceChildren(el("p", { class: "tree-canvas__empty" }, message));
+
+        this.resetZoom();
     }
 
     _handleWheel(event) {
         /*
         * Não captura o scroll enquanto não existir
-        * uma árvore desenhada.
+        * uma árvore desenhada; o scroll rola a página normalmente.
         */
-        if (!this.zoomWrap.querySelector("svg")) {
+        if (!this.hasContent) {
             return;
         }
 
@@ -144,14 +153,20 @@ export class TreeRenderer {
             );
         }
 
+        const noLazy = frame.noLazy ?? 0;
+
         for (const [index, position] of positions) {
-            svg.appendChild(this._renderNode(frame.nodes[index], position, toPixels(position)));
+            svg.appendChild(this._renderNode(frame.nodes[index], position, toPixels(position), noLazy));
         }
 
         this.zoomWrap.replaceChildren(svg);
+
+        this.hasContent = true;
+        this.container.classList.add(INTERACTIVE_CLASS);
+        this.container.title = INTERACTIVE_TITLE;
     }
 
-    _renderNode(node, position, { x, y }) {
+    _renderNode(node, position, { x, y }, noLazy = 0) {
         if (!node || node.id === null) return this._renderPendingNode(position, { x, y });
 
         const group = svgEl("g", { class: `node node--${node.status}` });
@@ -174,7 +189,7 @@ export class TreeRenderer {
             )
         );
 
-        if (node.lazy !== 0) {
+        if (node.lazy !== noLazy) {
             const badgeX = x + RADIUS - 2;
             const badgeY = y - RADIUS + 2;
 

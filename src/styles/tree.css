@@ -28,7 +28,13 @@
     min-height: 500px;
 
     overflow: auto;
+}
 
+/*
+ * Só ativa o zoom por scroll (cursor e overscroll contido)
+ * quando existe uma árvore desenhada.
+ */
+.tree-canvas--interactive {
     cursor: zoom-in;
 
     overscroll-behavior: contain;

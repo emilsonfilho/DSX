@@ -3,11 +3,15 @@ import { Field } from "./components/Field.js";
 import { Accordion, accordionGroup } from "./components/Accordion.js";
 import { OperationSelector } from "./components/OperationSelector.js";
 import { TheoryBox } from "./components/TheoryBox.js";
+import { showToast } from "./components/Toast.js";
 import {
     IndexUpdateForm,
     RangeQueryForm,
     RangeUpdateForm
 } from "./components/OperationForms.js";
+
+const RANGE_UPDATE_DISABLED_TITLE =
+    "MDC não suporta atualização de intervalo: mdc(a + x, b + x) ≠ mdc(a, b) + x.";
 
 const THEORY_SECTIONS = [
     {
@@ -102,6 +106,19 @@ export function ControlPanel({
         Accordion("Atualização de alcance", rangeUpdate.root, { onToggle }),
     ]);
 
+    const rangeUpdateAccordion = accordions[2];
+
+    let operationsEnabled = false;
+    let rangeUpdateAvailable = true;
+
+    function applyRangeUpdateState() {
+        const enabled = operationsEnabled && rangeUpdateAvailable;
+
+        rangeUpdateAccordion.root.classList.toggle("accordion--disabled", !enabled);
+        rangeUpdateAccordion.root.querySelector(".accordion__trigger").disabled = !enabled;
+        if (!enabled) rangeUpdateAccordion.close();
+    }
+
     const feedback = el(
         "p",
         {
@@ -149,13 +166,25 @@ export function ControlPanel({
         setFeedback(text, kind = FeedbackType.INFO) {
             feedback.textContent = text ?? "";
             feedback.className = `feedback feedback--${kind}`;
+            showToast(text, kind);
         },
         setOperationsEnabled(enabled) {
+            operationsEnabled = enabled;
+
             for (const item of accordions) {
+                if (item === rangeUpdateAccordion) continue;
+
                 item.root.classList.toggle("accordion--disabled", !enabled);
                 item.root.querySelector(".accordion__trigger").disabled = !enabled;
                 if (!enabled) item.close();
             }
+
+            applyRangeUpdateState();
+        },
+        setRangeUpdateAvailable(available) {
+            rangeUpdateAvailable = available;
+            rangeUpdateAccordion.root.title = available ? "" : RANGE_UPDATE_DISABLED_TITLE;
+            applyRangeUpdateState();
         },
         clearOperationInputs() {
             for (const form of [indexUpdate, rangeQuery, rangeUpdate]) {

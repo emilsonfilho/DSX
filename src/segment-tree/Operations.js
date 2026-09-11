@@ -5,6 +5,7 @@ export const SumStrategy = {
     merge: (esq, dir) => esq + dir,
     applyLazy: (currentValue, lazy, rangeLength) => currentValue + lazy * rangeLength,
     joinLazy: (oldLazy, newLazy) => oldLazy + newLazy,
+    lazyNeutral: 0,
 }
 
 export const MinStrategy = {
@@ -12,6 +13,7 @@ export const MinStrategy = {
     merge: (esq, dir) => Math.min(esq, dir),
     applyLazy: (currentValue, lazy, rangeLength) => currentValue + lazy,
     joinLazy: (oldLazy, newLazy) => oldLazy + newLazy,
+    lazyNeutral: 0,
 }
 
 export const MaxStrategy = {
@@ -19,6 +21,7 @@ export const MaxStrategy = {
     merge: (esq, dir) => Math.max(esq, dir),
     applyLazy: (currentValue, lazy, rangeLength) => currentValue + lazy,
     joinLazy: (oldLazy, newLazy) => oldLazy + newLazy,
+    lazyNeutral: 0,
 }
 
 export const XORStrategy = {
@@ -26,13 +29,14 @@ export const XORStrategy = {
     merge: (esq, dir) => esq ^ dir,
     applyLazy: (currentValue, lazy, rangeLength) => currentValue ^ (lazy * (rangeLength % 2)),
     joinLazy: (oldLazy, newLazy) => oldLazy ^ newLazy,
+    lazyNeutral: 0,
 }
 
 export const GCDStrategy = {
     neutral: 0,
     merge: (esq, dir) => gcd(esq, dir),
-    applyLazy: (currentValue, lazy, rangeLength) => currentValue + lazy,
-    joinLazy: (oldLazy, newLazy) => oldLazy + newLazy,
+    // mdc(a+x, b+x) != mdc(a,b)+x, então atualização de intervalo daria resultado errado
+    supportsRangeUpdate: false,
 }
 
 export const AndStrategy = {
@@ -40,8 +44,9 @@ export const AndStrategy = {
     neutral: -1,
     merge: (esq, dir) => esq & dir,
     applyLazy: (currentValue, lazy) => currentValue & lazy,
-    // 0 é o valor usado pra marcar "sem lazy pendente", então não pode virar operando do E
-    joinLazy: (oldLazy, newLazy) => (oldLazy === 0 ? newLazy : oldLazy & newLazy),
+    joinLazy: (oldLazy, newLazy) => oldLazy & newLazy,
+    // -1 também é o elemento neutro do lazy: "sem atualização pendente"
+    lazyNeutral: -1,
 }
 
 export const AscendingComparator = (a, b) => a <= b
@@ -55,7 +60,7 @@ export const Strategies = Object.freeze({
     sum: { key: "sum", label: "SOMA", resultLabel: "Soma", updateVerb: "Somado", strategy: SumStrategy },
     min: { key: "min", label: "MÍN", resultLabel: "Mínimo", updateVerb: "Somado", strategy: MinStrategy },
     max: { key: "max", label: "MÁX", resultLabel: "Máximo", updateVerb: "Somado", strategy: MaxStrategy },
-    gcd: { key: "gcd", label: "MDC", resultLabel: "MDC", upadateVerb: "Aplicado MDC com", strategy: GCDStrategy },
+    gcd: { key: "gcd", label: "MDC", resultLabel: "MDC", updateVerb: "Aplicado MDC com", strategy: GCDStrategy },
     xor: { key: "xor", label: "XOR", resultLabel: "XOR", updateVerb: "Aplicado XOR com", strategy: XORStrategy },
     and: { key: "and", label: "AND", resultLabel: "AND", updateVerb: "Aplicado AND com", strategy: AndStrategy },
 });

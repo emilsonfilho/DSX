@@ -1,0 +1,155 @@
+/*
+   AVISOS FLUTUANTES (TOASTS)
+ */
+
+.toast-container {
+    position: fixed;
+
+    right: 16px;
+    bottom: 16px;
+
+    z-index: 2000;
+
+    display: flex;
+    flex-direction: column-reverse;
+
+    gap: 8px;
+
+    max-width: 360px;
+
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    padding: 12px 14px;
+
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+
+    color: var(--ink-600);
+
+    font-size: 12.5px;
+    line-height: 1.4;
+
+    pointer-events: auto;
+
+    animation: toast-in 0.18s ease-out;
+}
+
+.toast--leaving {
+    animation: toast-out 0.18s ease-in forwards;
+}
+
+.toast--error {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.toast--success {
+    color: var(--success);
+}
+
+.toast--result {
+    color: var(--blue-700);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.toast__text {
+    flex: 1;
+
+    margin: 0;
+}
+
+.toast__close {
+    flex: none;
+
+    width: 20px;
+    height: 20px;
+
+    padding: 0;
+
+    border: none;
+    border-radius: var(--radius-sm);
+
+    background: transparent;
+
+    color: inherit;
+    opacity: 0.6;
+
+    font: inherit;
+    font-size: 15px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.toast__close:hover {
+    opacity: 1;
+
+    background: var(--surface-2);
+}
+
+
+/*
+   ANIMAÇÕES
+ */
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes toast-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast {
+        animation: none;
+    }
+
+    .toast--leaving {
+        animation: none;
+    }
+}
+
+
+/*
+   RESPONSIVIDADE
+ */
+
+@media (max-width: 480px) {
+    .toast-container {
+        left: 16px;
+        right: 16px;
+
+        max-width: none;
+    }
+}

@@ -2,6 +2,7 @@ import { el } from "./dom.js";
 import { Field } from "./components/Field.js";
 import { Accordion, accordionGroup } from "./components/Accordion.js";
 import { TheoryBox } from "./components/TheoryBox.js";
+import { showToast } from "./components/Toast.js";
 
 const THEORY_SECTIONS = [
     {
@@ -126,6 +127,7 @@ export function DequeControlPanel({ onPushBack, onPopFront, onPopBack, onSliding
         setFeedback(text, kind = "info") {
             feedback.textContent = text ?? "";
             feedback.className = `feedback feedback--${kind}`;
+            showToast(text, kind);
         },
         clearValueInput() {
             valueField.clear();
